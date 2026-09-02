@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { rouge: '#C8161B', jaune: '#F5C518' }, fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+    }
+  </script>
+  <style>
+    body { background-color: #f3f4f6; padding-bottom: 90px; font-family: 'Inter', sans-serif; }
+    input, select, textarea, button { font-family: inherit; }
+    .glass { background: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .input-field { border: 1.5px solid #e5e7eb; padding: 12px; border-radius: 8px; width: 100%; font-size: 16px; transition: all 0.2s; }
+    .input-field:focus { border-color: #C8161B; outline: none; }
+    .btn-primary { background: #C8161B; color: white; padding: 14px; border-radius: 8px; font-weight: 700; transition: all 0.2s; }
+    .btn-primary:disabled { opacity: 0.6; }
+    .section-header { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 700; color: #C8161B; text-transform: uppercase; margin: 1.5rem 0 0.75rem 0; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e7eb; display: flex; padding: 12px 0; z-index: 50; }
+    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #6b7280; font-size: 11px; font-weight: 600; cursor: pointer; background: none; border: none; }
+    .nav-item.active { color: #C8161B; }
+    .icon-svg { width: 22px; height: 22px; margin-bottom: 4px; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .mois-badge { padding: 8px 4px; border-radius: 8px; text-align: center; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s; border: 2px solid transparent; }
+    .mois-badge.paye { background: #dcfce7; color: #15803d; }
+    .mois-badge.partiel { background: #ffedd5; color: #c2410c; }
+    .mois-badge.impaye { background: #fee2e2; color: #b91c1c; }
+    .mois-badge.exonere { background: #f3f4f6; color: #9ca3af; }
+    .mois-badge.avant { background: #f3f4f6; color: #9ca3af; cursor: default; }
+    .mois-badge:active { transform: scale(0.95); }
+    .mois-badge.selected { border-color: #C8161B; }
+  </style>
+</head>
+<body>
+
+  <!-- ================= PAGE DE CONNEXION ================= -->
+  <div id="loginPage" class="min-h-screen flex items-center justify-center p-6 bg-rouge">
+    <div class="bg-white p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+      <div class="w-20 h-20 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden">
+        <img src="data:image/jpeg;base64,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" alt="Logo Excellence Group" class="max-h-20">
+      </div>
+      <h1 class="text-xl font-black text-rouge uppercase tracking-tight">Excellence Group</h1>
+      <p class="text-jaune font-bold text-xs tracking-widest mb-8">ESPACE ADMINISTRATION</p>
+      <div class="space-y-3">
+        <input type="text" id="user" placeholder="Identifiant" class="input-field text-center" autocomplete="username">
+        <input type="password" id="pass" placeholder="Code PIN" class="input-field text-center" autocomplete="current-password">
+        <button onclick="login(this)" class="btn-primary w-full shadow-lg">Connexion</button>
+        <div id="loginError" class="hidden text-red-600 text-sm font-bold pt-1">Identifiant ou code incorrect.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL SÉCURITÉ (accès stats) ================= -->
+  <div id="modalSecu" class="modal-overlay hidden">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6 text-center shadow-2xl">
+      <h3 class="font-extrabold text-gray-900 text-lg">Accès restreint</h3>
+      <p class="text-xs text-gray-500 mt-1 mb-4">Entrez un code PIN autorisé pour voir les statistiques.</p>
+      <input type="password" id="pinAdmin" placeholder="Code PIN" class="input-field text-center mb-3">
+      <div id="modalError" class="hidden text-red-600 text-xs font-bold mb-3">Code non autorisé.</div>
+      <div class="flex gap-3">
+        <button onclick="fermerModal()" class="flex-1 border border-gray-200 text-gray-600 font-bold py-3 rounded-lg">Annuler</button>
+        <button onclick="validerAccesDash(this)" class="flex-1 btn-primary">Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL PAIEMENT MENSUEL ================= -->
+  <div id="modalPaiement" class="modal-overlay hidden">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+      <h3 class="font-extrabold text-gray-900 text-lg mb-1">Encaisser un mois</h3>
+      <p id="paiementPeriodeLabel" class="text-xs text-gray-500 mb-4"></p>
+      <div class="space-y-3">
+        <div>
+          <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Montant</label>
+          <input type="number" id="paiementMontant" class="input-field">
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Moyen de paiement</label>
+          <select id="paiementMoyen" class="input-field">
+            <option value="Espèces">Espèces</option>
+            <option value="Wave">Wave</option>
+            <option value="Orange Money">Orange Money</option>
+          </select>
+        </div>
+        <input type="text" id="paiementTierce" placeholder="Encaissé par un tiers (optionnel)..." class="input-field text-xs italic">
+        <div id="paiementError" class="hidden text-red-600 text-xs font-bold"></div>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button onclick="fermerModalPaiement()" class="flex-1 border border-gray-200 text-gray-600 font-bold py-3 rounded-lg">Annuler</button>
+        <button id="btnConfirmerPaiement" onclick="confirmerPaiementMensuel()" class="flex-1 btn-primary">Confirmer</button>
+      </div>
+
+      <button onclick="toggleAjustementCasSocial()" class="w-full text-left text-[11px] font-bold text-orange-600 mt-4 pt-3 border-t border-dashed border-gray-200">
+        Ajuster le montant dû de ce mois (Cas Social, correction...)
+      </button>
+      <div id="blocAjustement" class="hidden mt-3 bg-orange-50 p-3 rounded-xl border border-orange-200 space-y-2">
+        <div>
+          <label class="block text-[10px] font-bold text-gray-700 mb-1">Nouveau montant dû pour ce mois (0 = rien à payer)</label>
+          <input type="number" id="ajustementMontant" class="input-field border-orange-300">
+        </div>
+        <input type="text" id="ajustementMotif" placeholder="Motif (optionnel)..." class="input-field border-orange-300 text-xs italic">
+        <div id="ajustementError" class="hidden text-red-600 text-xs font-bold"></div>
+        <button id="btnEnregistrerAjustement" onclick="confirmerAjustementMontantDu()" class="w-full bg-orange-600 text-white font-bold py-2.5 rounded-lg text-sm">
+          Enregistrer l'ajustement
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL PAUSE / ABANDON (plage de mois) ================= -->
+  <div id="modalPause" class="modal-overlay hidden">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+      <h3 class="font-extrabold text-gray-900 text-lg mb-1">Marquer une pause / un abandon</h3>
+      <p class="text-xs text-gray-500 mb-4">Met le montant dû à 0 F sur toute une plage de mois — pratique quand un élève s'arrête un temps (avec ou sans retour prévu).</p>
+      <div class="space-y-3">
+        <div>
+          <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Du mois</label>
+          <select id="pauseDebut" class="input-field"></select>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Au mois (inclus)</label>
+          <select id="pauseFin" class="input-field"></select>
+        </div>
+        <label class="flex items-center gap-2 text-xs font-bold text-gray-600">
+          <input type="checkbox" id="pauseJusquaFin" onchange="toggleUpauseJusquaFin()">
+          Jusqu'à la fin de l'année scolaire (abandon)
+        </label>
+        <input type="text" id="pauseMotif" placeholder="Motif (optionnel)..." class="input-field text-xs italic">
+        <div id="pauseError" class="hidden text-red-600 text-xs font-bold"></div>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button onclick="fermerModalPause()" class="flex-1 border border-gray-200 text-gray-600 font-bold py-3 rounded-lg">Annuler</button>
+        <button id="btnConfirmerPause" onclick="confirmerPause()" class="flex-1 bg-gray-600 text-white font-bold py-3 rounded-lg">Appliquer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= APPLICATION PRINCIPALE ================= -->
+  <div id="mainApp" class="hidden">
+    <header class="bg-white p-4 border-b-2 border-jaune sticky top-0 z-40 flex justify-between items-center">
+      <span class="text-sm font-extrabold text-rouge tracking-tight leading-tight">Excellence Group<br>Yamoussoukro</span>
+      <button onclick="ouvrirModalMonCompte()" id="userNameDisplay" class="text-[10px] bg-gray-100 px-3 py-1 rounded-full font-bold text-gray-600"></button>
+    </header>
+
+    <!-- ================= MODAL MON COMPTE ================= -->
+    <div id="modalMonCompte" class="modal-overlay hidden">
+      <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+        <h3 class="font-extrabold text-gray-900 text-lg mb-1">Mon compte</h3>
+        <p class="text-xs text-gray-500 mb-4">Change ton code personnel — utile si tu penses que quelqu'un d'autre le connaît.</p>
+        <div class="space-y-3">
+          <input type="password" inputmode="numeric" id="mcAncienPin" placeholder="Code actuel" class="input-field">
+          <input type="password" inputmode="numeric" id="mcNouveauPin" placeholder="Nouveau code (4 chiffres min.)" class="input-field">
+          <input type="password" inputmode="numeric" id="mcConfirmPin" placeholder="Confirmer le nouveau code" class="input-field">
+        </div>
+        <div id="mcError" class="hidden mt-3 p-3 bg-red-50 text-red-700 text-xs font-bold rounded-lg border border-red-200"></div>
+        <div id="mcSuccess" class="hidden mt-3 p-3 bg-green-50 text-green-700 text-xs font-bold rounded-lg border border-green-200"></div>
+        <div class="flex gap-3 mt-5">
+          <button onclick="fermerModalMonCompte()" class="flex-1 border border-gray-200 text-gray-600 font-bold py-3 rounded-lg">Fermer</button>
+          <button onclick="changerMonPinUI(this)" class="flex-1 btn-primary">Valider</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-4 max-w-xl mx-auto">
+
+      <!-- ============ VUE : INSCRIPTION ============ -->
+      <div id="vueInscription" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-extrabold text-gray-900">Inscription</h2>
+          <span class="text-xs font-bold text-jaune">NOUVEAU DOSSIER</span>
+        </div>
+
+        <form id="inscForm" class="glass p-5 space-y-4">
+          <div class="section-header">Identité</div>
+          <div class="grid grid-cols-2 gap-3">
+            <input type="text" name="nom" placeholder="Nom" required class="input-field">
+            <input type="text" name="prenoms" placeholder="Prénoms" required class="input-field">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <select name="sexe" required class="input-field">
+              <option value="M">Masculin</option>
+              <option value="F">Féminin</option>
+            </select>
+            <input type="text" name="matriculeLycee" placeholder="Matricule lycée" required class="input-field">
+          </div>
+
+          <div>
+            <select name="ecole" id="ecoleSelect" required class="input-field" onchange="toggleEcoleAutre()">
+              <option value="" disabled selected>-- École --</option>
+              <option value="Collège Ange Dominique 1">Collège Ange Dominique 1</option>
+              <option value="Collège Ange Dominique 2">Collège Ange Dominique 2</option>
+              <option value="Collège Aries">Collège Aries</option>
+              <option value="Collège Eden">Collège Eden</option>
+              <option value="Collège Heleis">Collège Heleis</option>
+              <option value="Collège K. L. Djédri">Collège K. L. Djédri</option>
+              <option value="Collège Konan 1">Collège Konan 1</option>
+              <option value="Collège Konan 2">Collège Konan 2</option>
+              <option value="Collège La Fontaine">Collège La Fontaine</option>
+              <option value="Collège Moderne II de Yamoussoukro">Collège Moderne II de Yamoussoukro</option>
+              <option value="Collège Municipal de Yamoussoukro">Collège Municipal de Yamoussoukro</option>
+              <option value="Collège Notre Dame de la Visitation">Collège Notre Dame de la Visitation</option>
+              <option value="Collège Notre Dame de Lourdes">Collège Notre Dame de Lourdes</option>
+              <option value="Collège Notre Dame des Lacs 1">Collège Notre Dame des Lacs 1</option>
+              <option value="Collège Privé Agbéhy des Jeunes Élites">Collège Privé Agbéhy des Jeunes Élites</option>
+              <option value="Collège Privé Amorovi">Collège Privé Amorovi</option>
+              <option value="Collège Privé Avogadro">Collège Privé Avogadro</option>
+              <option value="Collège Privé BAKOU">Collège Privé BAKOU</option>
+              <option value="Collège Privé CALE">Collège Privé CALE</option>
+              <option value="Collège Privé Catholique Saint Louis">Collège Privé Catholique Saint Louis</option>
+              <option value="Collège Privé Dieudonné">Collège Privé Dieudonné</option>
+              <option value="Collège Privé Gnonhonda">Collège Privé Gnonhonda</option>
+              <option value="Collège Privé Grâce Trésor">Collège Privé Grâce Trésor</option>
+              <option value="Collège Privé ISCAE">Collège Privé ISCAE</option>
+              <option value="Collège Privé Jeunes Filles Athéna">Collège Privé Jeunes Filles Athéna</option>
+              <option value="Collège Privé Kiwi">Collège Privé Kiwi</option>
+              <option value="Collège Privé Mariam Fofana Al Ma-Arifa">Collège Privé Mariam Fofana Al Ma-Arifa</option>
+              <option value="Collège Privé Mocinla">Collège Privé Mocinla</option>
+              <option value="Collège Privé Notre Dame des Lacs 2">Collège Privé Notre Dame des Lacs 2</option>
+              <option value="Collège Privé Pédagogue">Collège Privé Pédagogue</option>
+              <option value="Collège Privé Sainte Catherine">Collège Privé Sainte Catherine</option>
+              <option value="Cours Secondaire Protestant CMA">Cours Secondaire Protestant CMA</option>
+              <option value="Lycée Mamie Adjoua">Lycée Mamie Adjoua</option>
+              <option value="Lycée Mixte 1">Lycée Mixte 1</option>
+              <option value="Lycée Mixte 2">Lycée Mixte 2</option>
+              <option value="Lycée Moderne 1">Lycée Moderne 1</option>
+              <option value="Lycée Moderne BAD">Lycée Moderne BAD</option>
+              <option value="Lycée Scientifique de Yamoussoukro">Lycée Scientifique de Yamoussoukro</option>
+              <option value="Autre">Autre (préciser)</option>
+            </select>
+            <input type="text" name="ecoleAutre" id="ecoleAutreInput" placeholder="Nom de l'école" class="input-field hidden mt-2">
+          </div>
+
+          <div class="section-header">Base &amp; Niveau</div>
+          <div class="grid grid-cols-2 gap-3">
+            <select name="base" id="baseInsc" required class="input-field font-bold text-rouge" onchange="onBaseChange()">
+              <option value="" disabled selected>-- Base --</option>
+              <option value="Zaher">Zaher</option>
+              <option value="Kokrenou">Kokrenou</option>
+            </select>
+            <select name="niveau" id="niveauInsc" required class="input-field font-bold text-rouge" onchange="onNiveauChange()">
+              <option value="" disabled selected>-- Niveau --</option>
+            </select>
+          </div>
+          <div id="wrapperSerie" class="hidden">
+            <select name="serie" id="serieInsc" class="input-field bg-yellow-50 border-jaune font-bold text-rouge">
+              <option value="" disabled selected>-- Série --</option>
+            </select>
+          </div>
+          <div id="alerteKokrenou" class="hidden p-3 bg-red-50 text-red-700 text-xs font-bold rounded-lg border border-red-200">
+            Attention : Kokrenou n'accueille que la 3e, la 2nde (série C) et la Terminale (série D uniquement). Choisissez Zaher pour ce profil.
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Mois d'arrivée (1er mois de cours suivi)</label>
+            <select name="moisArrivee" id="moisArriveeInsc" required class="input-field">
+              <option value="" disabled selected>-- Mois d'arrivée --</option>
+            </select>
+          </div>
+
+          <div class="section-header">Contacts</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="text-sm">WhatsApp Élève</label>
+              <input type="tel" name="telEleve" class="input-field">
+            </div>
+            <div>
+              <label class="text-sm">WhatsApp Parent</label>
+              <input type="tel" name="telParent" class="input-field">
+            </div>
+          </div>
+
+          <div class="mb-2 bg-orange-50 p-3 rounded-xl border border-orange-200">
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" name="isSocial" id="isSocial" onchange="toggleSocial()" class="w-5 h-5 text-orange-600 rounded focus:ring-orange-500">
+              <span class="text-sm font-bold text-orange-800">Cas Social</span>
+            </label>
+            <div id="divMontantsSocial" class="hidden mt-3 space-y-2">
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Frais d'inscription (si différent des 5 000 FCFA)</label>
+                <input type="number" name="fraisInscriptionSocial" placeholder="5000" class="input-field border-orange-300">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Montant mensuel (si différent du barème)</label>
+                <input type="number" name="montantMensuelSocial" placeholder="Ex: 3000" class="input-field border-orange-300">
+              </div>
+            </div>
+          </div>
+
+          <div class="section-header text-green-700">Paiement du frais d'inscription</div>
+          <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <select name="moyenInscription" required class="input-field">
+                <option value="Espèces">Espèces</option>
+                <option value="Wave">Wave</option>
+                <option value="Orange Money">Orange Money</option>
+              </select>
+              <input type="text" name="tierceInscription" placeholder="Encaissé par un tiers..." class="input-field text-xs italic">
+            </div>
+          </div>
+
+          <div id="errorMsg" class="p-3 bg-red-50 text-red-700 text-xs font-bold hidden rounded-lg border border-red-200"></div>
+
+          <button type="submit" id="btnSubmitInsc" class="btn-primary w-full shadow-lg shadow-rouge/20">
+            Valider l'Inscription
+          </button>
+        </form>
+      </div>
+
+      <!-- ============ VUE : ENCAISSEMENT MENSUEL ============ -->
+      <div id="vuePaiement" class="hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-extrabold text-gray-900">Encaissement</h2>
+          <span class="text-xs font-bold text-rouge">SUIVI MENSUEL</span>
+        </div>
+
+        <div class="glass p-5 space-y-4">
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">1. Base</label>
+            <select id="basePaiement" class="input-field font-bold text-rouge bg-gray-50" onchange="onBasePaiementChange()">
+              <option value="">-- Sélectionner --</option>
+              <option value="Zaher">Zaher</option>
+              <option value="Kokrenou">Kokrenou</option>
+            </select>
+          </div>
+
+          <div id="wrapperNiveauPaiement" class="opacity-50 pointer-events-none transition-all">
+            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">2. Classe</label>
+            <select id="niveauPaiement" class="input-field font-bold text-rouge" onchange="onNiveauPaiementChange()">
+              <option value="">Choisir la base d'abord</option>
+            </select>
+          </div>
+
+          <div id="wrapperSeriePaiement" class="hidden">
+            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">3. Série</label>
+            <select id="seriePaiement" class="input-field bg-yellow-50 border-jaune font-bold text-rouge" onchange="chargerElevesParBase()">
+              <option value="">-- Série --</option>
+            </select>
+          </div>
+
+          <div id="wrapperEleve" class="opacity-50 pointer-events-none transition-all">
+            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">4. Élève</label>
+            <input type="text" id="rechercheEleve" placeholder="Tapez un nom pour filtrer..." class="input-field mb-2" oninput="filtrerListeEleves()">
+            <select id="listeEleves" onchange="afficherGrilleEleve()" class="input-field font-bold text-rouge">
+              <option value="">Choisir la classe d'abord</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="grillePaiement" class="hidden glass p-5 space-y-3">
+          <div class="flex justify-between items-center">
+            <span id="grilleEleveNom" class="font-extrabold text-gray-900"></span>
+            <span id="grilleEleveMontant" class="text-xs font-bold text-gray-400"></span>
+          </div>
+          <div id="grilleMois" class="grid grid-cols-4 gap-2"></div>
+          <p class="text-[10px] text-gray-400 italic">Touchez un mois en orange ou rouge pour encaisser. Gris = rien à payer (avant arrivée, pause, ou exonération). * = montant ajusté ponctuellement.</p>
+          <button onclick="ouvrirModalPause()" class="w-full text-center text-[11px] font-bold text-gray-500 mt-1 pt-3 border-t border-dashed border-gray-200">
+            Marquer une pause ou un abandon sur plusieurs mois
+          </button>
+        </div>
+      </div>
+
+      <!-- ============ VUE : ÉQUIPE (encadreurs + classes & matières) ============ -->
+      <div id="vueEquipe" class="hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-extrabold text-gray-900">Équipe</h2>
+          <span class="text-xs font-bold text-rouge">ENCADREURS &amp; MATIÈRES</span>
+        </div>
+
+        <div class="flex gap-2">
+          <button onclick="switchSousOngletEquipe('encadreurs')" id="sousTabEncadreurs" class="flex-1 py-2 rounded-lg text-xs font-bold bg-rouge text-white">Encadreurs</button>
+          <button onclick="switchSousOngletEquipe('seances')" id="sousTabSeances" class="flex-1 py-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-500">Séances</button>
+          <button onclick="switchSousOngletEquipe('paie')" id="sousTabPaie" class="flex-1 py-2 rounded-lg text-xs font-bold bg-gray-100 text-gray-500">Paie</button>
+        </div>
+
+        <!-- Sous-vue : Encadreurs -->
+        <div id="sousVueEncadreurs" class="space-y-4">
+          <div class="glass p-5 space-y-3">
+            <div class="section-header">Nouvel encadreur</div>
+            <div class="grid grid-cols-2 gap-3">
+              <input type="text" id="encNom" placeholder="Nom" class="input-field">
+              <input type="text" id="encPrenoms" placeholder="Prénoms" class="input-field">
+            </div>
+            <input type="tel" id="encTelephone" placeholder="Téléphone" class="input-field">
+            <div>
+              <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Catégorie d'ancienneté (tarif/séance)</label>
+              <select id="encCategorieAnciennete" class="input-field"></select>
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Bases où il/elle intervient</label>
+              <div class="flex gap-2">
+                <button type="button" onclick="toggleBaseChip(this)" data-value="Zaher" data-selected="false" class="chip-base flex-1 px-4 py-2.5 rounded-lg text-sm font-bold border bg-gray-50 text-gray-500 border-gray-200 transition-colors">Zaher</button>
+                <button type="button" onclick="toggleBaseChip(this)" data-value="Kokrenou" data-selected="false" class="chip-base flex-1 px-4 py-2.5 rounded-lg text-sm font-bold border bg-gray-50 text-gray-500 border-gray-200 transition-colors">Kokrenou</button>
+              </div>
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Matières enseignées</label>
+              <div id="encMatieresChips" class="flex flex-wrap gap-2"></div>
+            </div>
+            <div id="encError" class="hidden p-3 bg-red-50 text-red-700 text-xs font-bold rounded-lg border border-red-200"></div>
+            <button onclick="creerEncadreurUI(this)" class="btn-primary w-full">Créer l'encadreur</button>
+          </div>
+
+          <div class="glass p-5">
+            <div class="section-header">Liste des encadreurs</div>
+            <div id="listeEncadreursUI" class="space-y-3">
+              <div class="text-center text-sm text-gray-500 italic">Chargement...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sous-vue : Séances -->
+        <div id="sousVueSeances" class="hidden space-y-4">
+          <div class="glass p-5">
+            <div class="section-header !mt-0">Séances du jour</div>
+            <div class="flex items-center gap-2 mb-3">
+              <button onclick="changerJourSeances(-1)" class="p-2.5 rounded-lg bg-gray-100 text-gray-600 font-black">‹</button>
+              <input type="date" id="dateJourSeances" onchange="chargerSeancesDuJour()" class="input-field flex-1 text-center font-bold">
+              <button onclick="changerJourSeances(1)" class="p-2.5 rounded-lg bg-gray-100 text-gray-600 font-black">›</button>
+            </div>
+            <div id="resumeJourSeances" class="text-xs text-gray-400 text-center mb-3"></div>
+            <div id="seancesJourUI" class="space-y-4">
+              <div class="text-center text-sm text-gray-500 italic py-2">Chargement...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sous-vue : Paie -->
+        <div id="sousVuePaie" class="hidden space-y-4">
+          <div class="glass p-5 space-y-3">
+            <div class="section-header">Période</div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Du</label>
+                <input type="date" id="paieDateDebut" class="input-field">
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Au</label>
+                <input type="date" id="paieDateFin" class="input-field">
+              </div>
+            </div>
+            <button onclick="chargerRapportPaie(this)" class="btn-primary w-full">Calculer</button>
+            <p class="text-[10px] text-gray-400">Compte les créneaux marqués "Faite" (l'émargement fait passer un créneau à ce statut automatiquement). 2 blocs de 4h = 1 séance payée ; un bloc isolé = une demi-séance.</p>
+          </div>
+
+          <div class="glass p-5">
+            <div class="section-header">Récapitulatif</div>
+            <div id="rapportPaieUI" class="space-y-3">
+              <p class="text-sm text-gray-400 italic text-center">Choisis une période puis clique "Calculer".</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ VUE : DASHBOARD ============ -->
+      <div id="vueDashboard" class="hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-extrabold text-gray-900">Tableau de bord</h2>
+          <span class="text-xs font-bold text-rouge">TEMPS RÉEL</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="glass p-4 text-center border-l-4 border-l-blue-500">
+            <div class="text-[10px] font-bold text-gray-400 uppercase">Total Élèves</div>
+            <div id="statEleves" class="text-2xl font-black text-gray-800 mt-1">...</div>
+          </div>
+          <div class="glass p-4 text-center border-l-4 border-l-green-500">
+            <div class="text-[10px] font-bold text-gray-400 uppercase">Total Encaissé</div>
+            <div id="statCaisse" class="text-xl font-black text-green-600 mt-1">...</div>
+          </div>
+        </div>
+
+        <div class="glass p-5 mt-2">
+          <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Effectifs par base</div>
+          <div id="repartitionBase" class="space-y-3"><div class="text-center text-sm text-gray-500 italic">Chargement...</div></div>
+        </div>
+
+        <div class="glass p-5 mt-4">
+          <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Effectifs par niveau</div>
+          <div id="repartitionNiveau" class="space-y-3"><div class="text-center text-sm text-gray-500 italic">Chargement...</div></div>
+        </div>
+
+        <div class="glass p-5 mt-4">
+          <div class="flex items-center justify-between mb-1">
+            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recouvrement du mois</div>
+          </div>
+          <div class="flex items-center justify-between gap-2 mb-4">
+            <button onclick="changerMoisRecouvrement(-1)" class="w-9 h-9 flex-shrink-0 rounded-lg border border-gray-200 text-gray-500 font-bold">&lsaquo;</button>
+            <select id="selectMoisRecouvrement" onchange="chargerRecouvrementDetail()" class="input-field text-center font-bold text-rouge"></select>
+            <button onclick="changerMoisRecouvrement(1)" class="w-9 h-9 flex-shrink-0 rounded-lg border border-gray-200 text-gray-500 font-bold">&rsaquo;</button>
+          </div>
+
+          <div id="recouvrementDetail">
+            <div class="text-center text-sm text-gray-500 italic py-4">Chargement...</div>
+          </div>
+        </div>
+
+        <div class="glass p-5 mt-4">
+          <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Évolution des recettes sur l'année</div>
+          <div id="graphiqueEvolution"><div class="text-center text-sm text-gray-500 italic">Chargement...</div></div>
+        </div>
+
+        <div class="glass p-4 mt-4 text-center border-l-4 border-l-purple-500">
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recettes du jour</div>
+            <input type="date" id="dateFiltre" onchange="calculerRecetteJour()" class="text-xs p-1 border rounded text-gray-700 font-bold bg-white outline-none">
+          </div>
+          <div id="statJour" class="text-3xl font-black text-purple-600">...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <nav class="bottom-nav">
+      <button onclick="switchTab('insc')" id="tabInsc" class="nav-item active">
+        <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        Inscrire
+      </button>
+      <button onclick="switchTab('pay')" id="tabPay" class="nav-item">
+        <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Encaisser
+      </button>
+      <button onclick="switchTab('equipe')" id="tabEquipe" class="nav-item">
+        <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 100-8 4 4 0 000 8zm6 3c1.657 0 3 1.343 3 3v2h-6v-2c0-1.657 1.343-3 3-3zm-12 0c-1.657 0-3 1.343-3 3v2h6v-2c0-1.657-1.343-3-3-3z"/></svg>
+        Équipe
+      </button>
+      <button onclick="switchTab('dash')" id="tabDash" class="nav-item">
+        <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Statistiques
+      </button>
+    </nav>
+  </div>
+
+  <script>
+    let sessionToken = "";
+    let currentEncaisseur = "";
+    let userBase = null;
+    let userPermissions = { canSeeStats: false };
+    let CONFIG = null; // { niveaux, periodes, fraisInscription }
+    let grilleActuelle = null; // dernière grille chargée pour l'élève sélectionné
+    let periodeEnCours = null; // période cliquée pour paiement
+
+    const formatMoney = (num) => {
+      const n = Number(num);
+      const safe = isFinite(n) ? n : 0;
+      return Math.round(safe).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f") + " F";
+    };
+
+    // Grise un bouton et change son texte pendant un traitement, pour éviter
+    // les double-clics quand la page reste visuellement figée le temps que
+    // la requête aboutisse. Retourne une fonction à appeler pour restaurer
+    // l'état d'origine (succès ou échec).
+    function avecChargement(bouton, texteChargement) {
+      if (!bouton) return function () {};
+      const texteOriginal = bouton.innerHTML;
+      bouton.disabled = true;
+      bouton.classList.add('opacity-50', 'cursor-not-allowed');
+      bouton.innerHTML = texteChargement || 'Patiente...';
+      return function restaurer() {
+        bouton.disabled = false;
+        bouton.classList.remove('opacity-50', 'cursor-not-allowed');
+        bouton.innerHTML = texteOriginal;
+      };
+    }
+
+    // Abrège un libellé de période ("Novembre 2026" -> "Nov", ou pour un
+    // libellé combiné "Septembre-Octobre 2026" -> "Sep-Oct" au lieu de
+    // tronquer bêtement aux 3 premiers caractères ("Sep").
+    function abregerMois(label) {
+      const motPrincipal = label.split(' ')[0];
+      return motPrincipal.split('-').map(m => m.slice(0, 3)).join('-');
+    }
+    // Convertit toute valeur potentiellement invalide (NaN, undefined...) en 0,
+    // pour les champs de saisie qui affichent un nombre brut (hors formatMoney).
+    const numSafe = (num) => { const n = Number(num); return isFinite(n) ? n : 0; };
+
+    // ---------------- CONNEXION ----------------
+    function login(bouton) {
+      const u = document.getElementById('user').value.trim();
+      const p = document.getElementById('pass').value;
+      const errDiv = document.getElementById('loginError');
+      errDiv.classList.add('hidden');
+      if (!u || !p) return;
+
+      const restaurer = avecChargement(bouton, 'Connexion...');
+
+      google.script.run
+        .withSuccessHandler(res => {
+          restaurer();
+          if (res.success) {
+            sessionToken = res.token;
+            currentEncaisseur = res.user;
+            userPermissions.canSeeStats = res.canSeeStats;
+            userBase = res.base || null;
+
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userNameDisplay').innerText = currentEncaisseur + (userBase ? ' · ' + userBase : '');
+
+            appliquerRestrictionBase();
+            chargerConfig();
+          } else {
+            errDiv.classList.remove('hidden');
+          }
+        })
+        .withFailureHandler(() => { restaurer(); errDiv.classList.remove('hidden'); })
+        .verifierLogin(u, p);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      ['user', 'pass'].forEach(id => {
+        document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+      });
+    });
+
+    function appliquerRestrictionBase() {
+      if (!userBase) return;
+      const baseInsc = document.getElementById('baseInsc');
+      baseInsc.innerHTML = `<option value="${userBase}" selected>${userBase}</option>`;
+      const basePaiement = document.getElementById('basePaiement');
+      basePaiement.innerHTML = `<option value="${userBase}" selected>${userBase}</option>`;
+    }
+
+    // ---------------- CONFIG NIVEAUX / SÉRIES ----------------
+    function chargerConfig() {
+      google.script.run
+        .withSuccessHandler(cfg => {
+          CONFIG = cfg;
+          appliquerFiltreNiveauSelonBase();
+          peuplerMoisArrivee();
+          onBasePaiementChange();
+        })
+        .getConfigNiveaux();
+    }
+
+    function peuplerMoisArrivee() {
+      if (!CONFIG) return;
+      const moisSelect = document.getElementById('moisArriveeInsc');
+      moisSelect.innerHTML = '<option value="" disabled selected>-- Mois d\'arrivée --</option>' +
+        CONFIG.periodes.map(p => `<option value="${p.key}">${p.label}</option>`).join('');
+    }
+
+    // Reconstruit la liste des niveaux disponibles en fonction de la base
+    // sélectionnée : Kokrenou n'accueille que 3e, 2nde-C et Tle-D. Comme ces
+    // niveaux n'ont chacun qu'une seule série possible là-bas, on la fusionne
+    // directement dans le choix de classe ("Tle:D") plutôt que d'imposer une
+    // étape Série en plus.
+    function appliquerFiltreNiveauSelonBase() {
+      if (!CONFIG) return;
+      const base = document.getElementById('baseInsc').value;
+      const niveauSelect = document.getElementById('niveauInsc');
+
+      niveauSelect.innerHTML = '<option value="" disabled selected>-- Niveau --</option>';
+      if (base === 'Kokrenou') {
+        niveauSelect.innerHTML += '<option value="3e">3e</option><option value="2nde:C">2nde C</option><option value="Tle:D">Tle D</option>';
+      } else {
+        CONFIG.ordreNiveaux.forEach(n => {
+          niveauSelect.innerHTML += `<option value="${n}">${n}</option>`;
+        });
+      }
+
+      document.getElementById('wrapperSerie').classList.add('hidden');
+      document.getElementById('serieInsc').innerHTML = '';
+      document.getElementById('alerteKokrenou').classList.add('hidden');
+    }
+
+    function onBaseChange() {
+      appliquerFiltreNiveauSelonBase();
+    }
+
+    function onNiveauChange() {
+      const niveauRaw = document.getElementById('niveauInsc').value;
+      const wrapperSerie = document.getElementById('wrapperSerie');
+      const serieSelect = document.getElementById('serieInsc');
+      if (!CONFIG || !niveauRaw) return;
+
+      // Cas Kokrenou fusionné (valeur "Tle:D") : niveau et série sont déjà
+      // fixés par ce seul choix, pas d'étape Série séparée à afficher.
+      if (niveauRaw.indexOf(':') !== -1) {
+        wrapperSerie.classList.add('hidden');
+        serieSelect.innerHTML = '';
+        document.getElementById('alerteKokrenou').classList.add('hidden');
+        return;
+      }
+
+      const def = CONFIG.niveaux[niveauRaw];
+      if (def.series && def.series.length) {
+        wrapperSerie.classList.remove('hidden');
+        serieSelect.required = true;
+        serieSelect.innerHTML = '<option value="" disabled selected>-- Série --</option>' +
+          def.series.map(s => `<option value="${s}">${s}</option>`).join('');
+      } else {
+        wrapperSerie.classList.add('hidden');
+        serieSelect.required = false;
+        serieSelect.innerHTML = '';
+      }
+
+      onBaseNiveauChange();
+    }
+
+    // Filet de sécurité : les listes sont déjà filtrées en amont, donc ce
+    // bandeau ne devrait plus jamais s'afficher en usage normal.
+    function onBaseNiveauChange() {
+      const base = document.getElementById('baseInsc').value;
+      const niveau = document.getElementById('niveauInsc').value;
+      const serie = document.getElementById('serieInsc').value;
+      const alerte = document.getElementById('alerteKokrenou');
+
+      if (base === 'Kokrenou' && niveau) {
+        const ok = (niveau === '3e') || (niveau === '2nde' && serie === 'C') || (niveau === 'Tle' && serie === 'D');
+        alerte.classList.toggle('hidden', ok);
+      } else {
+        alerte.classList.add('hidden');
+      }
+    }
+    document.getElementById('serieInsc') && document.getElementById('serieInsc').addEventListener('change', onBaseNiveauChange);
+    // (ré-attaché dynamiquement car le select série est reconstruit)
+    document.addEventListener('change', e => { if (e.target && e.target.id === 'serieInsc') onBaseNiveauChange(); });
+
+    function toggleEcoleAutre() {
+      const select = document.getElementById('ecoleSelect');
+      const input = document.getElementById('ecoleAutreInput');
+      const estAutre = select.value === 'Autre';
+      input.classList.toggle('hidden', !estAutre);
+      input.required = estAutre;
+      if (!estAutre) input.value = '';
+    }
+
+    function toggleSocial() {
+      const checked = document.getElementById('isSocial').checked;
+      document.getElementById('divMontantsSocial').classList.toggle('hidden', !checked);
+    }
+
+    // ---------------- NAVIGATION ----------------
+    let ongletProtegeDemande = null; // mémorise quel onglet protégé a déclenché la modal PIN
+
+    function switchTab(t) {
+      if ((t === 'dash' || t === 'equipe') && !userPermissions.canSeeStats) {
+        ongletProtegeDemande = t;
+        document.getElementById('modalSecu').classList.remove('hidden');
+        document.getElementById('pinAdmin').value = '';
+        document.getElementById('modalError').classList.add('hidden');
+        return;
+      }
+      ['vueInscription', 'vuePaiement', 'vueEquipe', 'vueDashboard'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      ['tabInsc', 'tabPay', 'tabEquipe', 'tabDash'].forEach(id => document.getElementById(id).classList.remove('active'));
+      const map = { insc: ['vueInscription', 'tabInsc'], pay: ['vuePaiement', 'tabPay'], equipe: ['vueEquipe', 'tabEquipe'], dash: ['vueDashboard', 'tabDash'] };
+      document.getElementById(map[t][0]).classList.remove('hidden');
+      document.getElementById(map[t][1]).classList.add('active');
+
+      if (t === 'dash') chargerDashboard();
+      if (t === 'equipe') chargerVueEquipe();
+      if (t === 'pay' && userBase) onBasePaiementChange();
+    }
+
+    function fermerModal() { document.getElementById('modalSecu').classList.add('hidden'); }
+
+    function validerAccesDash(btn) {
+      const pin = document.getElementById('pinAdmin').value;
+      const errDiv = document.getElementById('modalError');
+      errDiv.classList.add('hidden');
+      if (!pin) return;
+      const original = btn.innerText;
+      btn.innerText = "Vérification..."; btn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(autorise => {
+          btn.innerText = original; btn.disabled = false;
+          if (autorise) {
+            userPermissions.canSeeStats = true;
+            document.getElementById('modalSecu').classList.add('hidden');
+            switchTab(ongletProtegeDemande || 'dash');
+          } else {
+            errDiv.classList.remove('hidden');
+            document.getElementById('pinAdmin').value = '';
+          }
+        })
+        .withFailureHandler(() => { btn.innerText = original; btn.disabled = false; })
+        .verifierCodeSpecifique(pin, sessionToken);
+    }
+
+    // ---------------- DASHBOARD ----------------
+    function chargerDashboard() {
+      document.getElementById('statEleves').innerText = '...';
+      document.getElementById('statCaisse').innerText = '...';
+
+      google.script.run
+        .withSuccessHandler(stats => {
+          document.getElementById('statEleves').innerText = stats.totalEleves;
+          document.getElementById('statCaisse').innerText = formatMoney(stats.totalEncaisse);
+
+          let htmlBase = "";
+          stats.repartitionBase.forEach(b => {
+            const pct = stats.totalEleves > 0 ? Math.round((b.count / stats.totalEleves) * 100) : 0;
+            htmlBase += barreHtml(b.base, b.count + ' élève(s)', pct, 'bg-jaune');
+          });
+          document.getElementById('repartitionBase').innerHTML = htmlBase || '<p class="text-sm text-gray-400 italic">Aucune donnée.</p>';
+
+          let htmlNiveau = "";
+          stats.repartitionNiveau.forEach(nv => {
+            const pct = stats.totalEleves > 0 ? Math.round((nv.count / stats.totalEleves) * 100) : 0;
+            if (nv.count > 0) htmlNiveau += barreHtml(nv.niveau, nv.count + ' élève(s)', pct, 'bg-rouge');
+          });
+          document.getElementById('repartitionNiveau').innerHTML = htmlNiveau || '<p class="text-sm text-gray-400 italic">Aucune donnée.</p>';
+
+          // Sélecteur de mois pour le recouvrement détaillé (par défaut : mois courant)
+          const select = document.getElementById('selectMoisRecouvrement');
+          select.innerHTML = stats.recouvrementParPeriode.map(r => `<option value="${r.periodeKey}">${r.periode}</option>`).join('');
+          select.value = stats.periodeCouranteKey;
+          chargerRecouvrementDetail();
+
+          // Graphique d'évolution sur l'ensemble de l'année scolaire
+          document.getElementById('graphiqueEvolution').innerHTML = construireGraphiqueEvolution(stats.recouvrementParPeriode);
+        })
+        .withFailureHandler(err => alert("Erreur dashboard : " + err))
+        .getDashboardStats(sessionToken);
+
+      const inputDate = document.getElementById('dateFiltre');
+      if (!inputDate.value) inputDate.value = new Date().toISOString().split('T')[0];
+      calculerRecetteJour();
+    }
+
+    function changerMoisRecouvrement(delta) {
+      const select = document.getElementById('selectMoisRecouvrement');
+      const nouvelIndex = select.selectedIndex + delta;
+      if (nouvelIndex < 0 || nouvelIndex >= select.options.length) return;
+      select.selectedIndex = nouvelIndex;
+      chargerRecouvrementDetail();
+    }
+
+    // Détail attendu/encaissé du mois sélectionné, ventilé par base et par classe.
+    function chargerRecouvrementDetail() {
+      const periodeKey = document.getElementById('selectMoisRecouvrement').value;
+      if (!periodeKey) return;
+      const zone = document.getElementById('recouvrementDetail');
+      zone.innerHTML = '<div class="text-center text-sm text-gray-500 italic py-4">Chargement...</div>';
+
+      google.script.run
+        .withSuccessHandler(det => {
+          const pct = det.totalAttendu > 0 ? Math.min(100, Math.round((det.totalEncaisse / det.totalAttendu) * 100)) : 0;
+
+          let htmlBase = "";
+          det.parBase.forEach(b => {
+            if (b.attendu === 0 && b.encaisse === 0) return;
+            const p = b.attendu > 0 ? Math.min(100, Math.round((b.encaisse / b.attendu) * 100)) : 0;
+            htmlBase += barreHtml(b.base, formatMoney(b.encaisse) + ' / ' + formatMoney(b.attendu), p, 'bg-jaune');
+          });
+
+          let htmlNiveau = "";
+          det.parNiveau.forEach(nv => {
+            if (nv.attendu === 0 && nv.encaisse === 0) return;
+            const p = nv.attendu > 0 ? Math.min(100, Math.round((nv.encaisse / nv.attendu) * 100)) : 0;
+            htmlNiveau += barreHtml(nv.niveau, formatMoney(nv.encaisse) + ' / ' + formatMoney(nv.attendu), p, 'bg-rouge');
+          });
+
+          zone.innerHTML = `
+            <div class="text-center mb-4">
+              <div class="text-2xl font-black text-gray-800">${formatMoney(det.totalEncaisse)}</div>
+              <div class="text-xs text-gray-400 font-bold">sur ${formatMoney(det.totalAttendu)} attendus (${pct}%)</div>
+            </div>
+            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Par base</div>
+            <div class="space-y-2">${htmlBase || '<p class="text-xs text-gray-400 italic">Aucune donnée.</p>'}</div>
+            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 mt-4">Par classe</div>
+            <div class="space-y-2">${htmlNiveau || '<p class="text-xs text-gray-400 italic">Aucune donnée.</p>'}</div>`;
+        })
+        .withFailureHandler(err => { zone.innerHTML = '<p class="text-xs text-red-500 text-center">Erreur : ' + err + '</p>'; })
+        .getRecouvrementDetailPeriode(periodeKey, sessionToken);
+    }
+
+    // Graphique (SVG) de l'évolution attendu/encaissé sur les périodes de l'année.
+    function construireGraphiqueEvolution(periodesData) {
+      const w = 320, h = 150, padL = 8, padR = 8, padT = 10, padB = 24;
+      const innerW = w - padL - padR, innerH = h - padT - padB;
+      const maxVal = Math.max(1, ...periodesData.map(r => Math.max(r.encaisse, r.du)));
+      const n = periodesData.length;
+      const stepX = n > 1 ? innerW / (n - 1) : 0;
+
+      const xAt = i => padL + i * stepX;
+      const yAt = val => padT + innerH - (val / maxVal) * innerH;
+
+      const pointsEncaisse = periodesData.map((r, i) => `${xAt(i)},${yAt(r.encaisse)}`).join(' ');
+      const pointsAttendu = periodesData.map((r, i) => `${xAt(i)},${yAt(r.du)}`).join(' ');
+      const cercles = periodesData.map((r, i) => `<circle cx="${xAt(i)}" cy="${yAt(r.encaisse)}" r="3" fill="#16a34a"></circle>`).join('');
+      const labels = periodesData.map((r, i) => `<text x="${xAt(i)}" y="${h - 6}" font-size="9" text-anchor="middle" fill="#9ca3af">${abregerMois(r.periode)}</text>`).join('');
+
+      return `<svg viewBox="0 0 ${w} ${h}" class="w-full h-auto">
+          <polyline points="${pointsAttendu}" fill="none" stroke="#d1d5db" stroke-width="2" stroke-dasharray="4,3"></polyline>
+          <polyline points="${pointsEncaisse}" fill="none" stroke="#16a34a" stroke-width="2.5"></polyline>
+          ${cercles}
+          ${labels}
+        </svg>
+        <div class="flex items-center gap-4 mt-1 justify-center text-[10px] font-bold text-gray-500">
+          <span class="flex items-center gap-1"><span class="w-3 border-t-2 border-green-600 inline-block"></span> Encaissé</span>
+          <span class="flex items-center gap-1"><span class="w-3 border-t-2 border-dashed border-gray-300 inline-block"></span> Attendu</span>
+        </div>`;
+    }
+
+    function barreHtml(label, right, pct, color) {
+      return `<div>
+        <div class="flex justify-between text-xs font-bold mb-1">
+          <span class="text-gray-700">${label}</span><span class="text-rouge">${right}</span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-2">
+          <div class="${color} h-2 rounded-full" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+    }
+
+    function calculerRecetteJour() {
+      const dateChoisie = document.getElementById('dateFiltre').value;
+      if (!dateChoisie) return;
+      document.getElementById('statJour').innerText = "...";
+      google.script.run
+        .withSuccessHandler(total => { document.getElementById('statJour').innerText = formatMoney(total); })
+        .getStatsDuJour(dateChoisie, sessionToken);
+    }
+
+    // ---------------- ÉQUIPE (encadreurs + séances + paie) ----------------
+    let matieresListeCache = [];
+    let categoriesAncienneteCache = [];
+
+    function chargerVueEquipe() {
+      switchSousOngletEquipe('encadreurs');
+      chargerCategoriesAncienneteUI(); // enchaîne sur chargerListeEncadreurs() une fois le cache prêt
+      chargerListeMatieres();
+    }
+
+    function chargerListeMatieres() {
+      google.script.run
+        .withSuccessHandler(liste => {
+          matieresListeCache = liste;
+          creerChipsMatieres('encMatieresChips');
+        })
+        .getListeMatieres(sessionToken);
+    }
+
+    // Puces à sélection multiple, réutilisées pour l'encadreur ET la séance.
+    function creerChipsMatieres(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = matieresListeCache.map(m =>
+        `<button type="button" onclick="toggleMatiereChip(this)" data-value="${m}" data-selected="false" class="chip-matiere px-3 py-2 rounded-lg text-xs font-bold border bg-gray-50 text-gray-500 border-gray-200 transition-colors">${m}</button>`
+      ).join('');
+    }
+
+    function toggleMatiereChip(btn) {
+      const estSelectionne = btn.dataset.selected === 'true';
+      btn.dataset.selected = estSelectionne ? 'false' : 'true';
+      btn.className = 'chip-matiere px-3 py-2 rounded-lg text-xs font-bold border transition-colors ' +
+        (estSelectionne ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-rouge text-white border-rouge');
+    }
+
+    function chargerCategoriesAncienneteUI() {
+      google.script.run
+        .withSuccessHandler(cats => {
+          categoriesAncienneteCache = cats;
+          const select = document.getElementById('encCategorieAnciennete');
+          select.innerHTML = cats.map(c => `<option value="${c.nom}">${c.nom} — ${formatMoney(c.taux)}/séance</option>`).join('');
+          chargerListeEncadreurs(); // seulement maintenant, pour que les selects inline soient bien remplis
+        })
+        .getCategoriesAnciennete(sessionToken);
+    }
+
+    function switchSousOngletEquipe(sous) {
+      const vues = { encadreurs: 'sousVueEncadreurs', seances: 'sousVueSeances', paie: 'sousVuePaie' };
+      const tabs = { encadreurs: 'sousTabEncadreurs', seances: 'sousTabSeances', paie: 'sousTabPaie' };
+      Object.keys(vues).forEach(k => {
+        document.getElementById(vues[k]).classList.toggle('hidden', k !== sous);
+        document.getElementById(tabs[k]).className = 'flex-1 py-2 rounded-lg text-xs font-bold ' + (k === sous ? 'bg-rouge text-white' : 'bg-gray-100 text-gray-500');
+      });
+
+      if (sous === 'seances') {
+        const champDateJour = document.getElementById('dateJourSeances');
+        const aujourdhuiStr = new Date().toISOString().split('T')[0];
+        champDateJour.max = aujourdhuiStr;
+        if (!champDateJour.value) champDateJour.value = aujourdhuiStr;
+        chargerSeancesDuJour();
+      }
+
+      if (sous === 'paie') {
+        const debutEl = document.getElementById('paieDateDebut');
+        const finEl = document.getElementById('paieDateFin');
+        if (!debutEl.value) {
+          const auj = new Date();
+          debutEl.value = new Date(auj.getFullYear(), auj.getMonth(), 1).toISOString().split('T')[0];
+          finEl.value = new Date(auj.getFullYear(), auj.getMonth() + 1, 0).toISOString().split('T')[0];
+        }
+      }
+    }
+
+    function chargerRapportPaie(bouton) {
+      const dateDebut = document.getElementById('paieDateDebut').value;
+      const dateFin = document.getElementById('paieDateFin').value;
+      const zone = document.getElementById('rapportPaieUI');
+      zone.innerHTML = '<div class="text-center text-sm text-gray-500 italic">Calcul en cours...</div>';
+      const restaurer = avecChargement(bouton, 'Calcul en cours...');
+
+      google.script.run
+        .withSuccessHandler(rapport => {
+          restaurer();
+          const actifs = rapport.filter(r => r.salaireTotal > 0);
+          if (actifs.length === 0) {
+            zone.innerHTML = '<p class="text-sm text-gray-400 italic">Aucun encadreur n\'a de paie sur cette période.</p>';
+            return;
+          }
+          const totalGeneral = actifs.reduce((t, r) => t + r.salaireTotal, 0);
+          zone.innerHTML = actifs.map(r => `
+            <div class="flex justify-between items-center p-3 rounded-lg border border-gray-100 ${r.statut !== 'Actif' ? 'opacity-60' : ''}">
+              <div>
+                <div class="font-bold text-sm text-gray-800">${r.nom} ${r.prenoms}</div>
+                <div class="text-[10px] text-gray-400">${r.categorieAnciennete} (${formatMoney(r.tauxParSeance)}/séance) · ${r.nombreBlocs} bloc(s) de 4h ≈ ${r.equivalentSeances} séance(s)</div>
+                ${r.nombreBlocsHorsBareme > 0 ? `<div class="text-[10px] font-bold text-orange-600 mt-0.5">+ ${r.nombreBlocsHorsBareme} bloc(s) Congés/Prépa BAC — tarif non encore établi, non compté(s) ici</div>` : ''}
+              </div>
+              <div class="text-right">
+                <div class="font-black text-rouge">${formatMoney(r.salaireTotal)}</div>
+                <div class="text-[10px] text-gray-400">${formatMoney(r.tauxParSeance)}/séance</div>
+              </div>
+            </div>`).join('') +
+            `<div class="flex justify-between items-center p-3 mt-2 rounded-lg bg-gray-50 font-black">
+              <span class="text-sm text-gray-800">Total général</span>
+              <span class="text-rouge">${formatMoney(totalGeneral)}</span>
+            </div>`;
+        })
+        .withFailureHandler(err => { restaurer(); zone.innerHTML = '<p class="text-xs text-red-500">Erreur : ' + err + '</p>'; })
+        .getRapportSalaires(dateDebut, dateFin, sessionToken);
+    }
+
+    // ---- Encadreurs ----
+    function toggleBaseChip(btn) {
+      const estSelectionne = btn.dataset.selected === 'true';
+      btn.dataset.selected = estSelectionne ? 'false' : 'true';
+      btn.className = 'chip-base flex-1 px-4 py-2.5 rounded-lg text-sm font-bold border transition-colors ' +
+        (estSelectionne ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-rouge text-white border-rouge');
+    }
+
+    function creerEncadreurUI(bouton) {
+      const nom = document.getElementById('encNom').value.trim();
+      const prenoms = document.getElementById('encPrenoms').value.trim();
+      const telephone = document.getElementById('encTelephone').value.trim();
+      const categorieAnciennete = document.getElementById('encCategorieAnciennete').value;
+      const matieres = Array.from(document.querySelectorAll('#encMatieresChips .chip-matiere')).filter(b => b.dataset.selected === 'true').map(b => b.dataset.value);
+      const bases = Array.from(document.querySelectorAll('.chip-base')).filter(b => b.dataset.selected === 'true').map(b => b.dataset.value);
+      const errDiv = document.getElementById('encError');
+      errDiv.classList.add('hidden');
+
+      if (!nom || !prenoms) {
+        errDiv.innerText = "Nom et prénoms requis.";
+        errDiv.classList.remove('hidden');
+        return;
+      }
+      if (bases.length === 0) {
+        errDiv.innerText = "Sélectionnez au moins une base.";
+        errDiv.classList.remove('hidden');
+        return;
+      }
+      if (matieres.length === 0) {
+        errDiv.innerText = "Sélectionnez au moins une matière.";
+        errDiv.classList.remove('hidden');
+        return;
+      }
+
+      const restaurer = avecChargement(bouton, 'Création...');
+
+      google.script.run
+        .withSuccessHandler(res => {
+          restaurer();
+          alert("Encadreur créé : " + res.nom + "\nIdentifiant : " + res.id + "\nPIN : " + res.pin + "\n\nCommunique ces informations à l'encadreur.");
+          document.getElementById('encNom').value = '';
+          document.getElementById('encPrenoms').value = '';
+          document.getElementById('encTelephone').value = '';
+          document.getElementById('encCategorieAnciennete').value = '1ère année';
+          creerChipsMatieres('encMatieresChips');
+          document.querySelectorAll('.chip-base').forEach(b => {
+            b.dataset.selected = 'false';
+            b.className = 'chip-base flex-1 px-4 py-2.5 rounded-lg text-sm font-bold border bg-gray-50 text-gray-500 border-gray-200 transition-colors';
+          });
+          chargerListeEncadreurs();
+        })
+        .withFailureHandler(err => {
+          restaurer();
+          errDiv.innerText = err;
+          errDiv.classList.remove('hidden');
+        })
+        .creerEncadreur({ nom, prenoms, telephone, categorieAnciennete, matieres, bases }, sessionToken);
+    }
+
+    function chargerListeEncadreurs() {
+      const zone = document.getElementById('listeEncadreursUI');
+      zone.innerHTML = '<div class="text-center text-sm text-gray-500 italic">Chargement...</div>';
+
+      google.script.run
+        .withSuccessHandler(liste => {
+          if (liste.length === 0) {
+            zone.innerHTML = '<p class="text-sm text-gray-400 italic">Aucun encadreur pour le moment.</p>';
+            return;
+          }
+          zone.innerHTML = liste.map(enc => `
+            <div class="p-3 rounded-lg border ${enc.statut === 'Actif' ? 'border-gray-100' : 'border-red-100 bg-red-50 opacity-70'}">
+              <div class="flex justify-between items-start">
+                <div class="flex-1">
+                  <div class="font-bold text-sm text-gray-800">${enc.nom} ${enc.prenoms}</div>
+                  <div class="text-[10px] text-gray-400">${enc.id} · ${enc.telephone || 'sans téléphone'}</div>
+                  <div class="text-[10px] text-gray-500 mt-1">${enc.bases.join(', ')} — ${enc.matieres.join(', ') || 'aucune matière renseignée'}</div>
+                  <div class="flex items-center gap-2 mt-2">
+                    <select onchange="changerCategorieAncienneteUI('${enc.id}', this.value)" class="text-[10px] font-bold border border-gray-200 rounded px-1.5 py-1">
+                      ${categoriesAncienneteCache.map(c => `<option value="${c.nom}" ${c.nom === enc.categorieAnciennete ? 'selected' : ''}>${c.nom} — ${formatMoney(c.taux)}/séance</option>`).join('')}
+                    </select>
+                  </div>
+                </div>
+                <button onclick="toggleStatutEncadreurUI('${enc.id}','${enc.statut}', this)" class="text-[10px] font-bold px-2 py-1 rounded ${enc.statut === 'Actif' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}">
+                  ${enc.statut === 'Actif' ? 'Désactiver' : 'Réactiver'}
+                </button>
+              </div>
+            </div>`).join('');
+        })
+        .withFailureHandler(err => { zone.innerHTML = '<p class="text-xs text-red-500">Erreur : ' + err + '</p>'; })
+        .getListeEncadreurs(sessionToken);
+    }
+
+    function changerCategorieAncienneteUI(id, nouvelleCategorie) {
+      google.script.run
+        .withSuccessHandler(() => chargerListeEncadreurs())
+        .withFailureHandler(err => { alert("Erreur : " + err); chargerListeEncadreurs(); })
+        .modifierCategorieAncienneteEncadreur(id, nouvelleCategorie, sessionToken);
+    }
+
+    function toggleStatutEncadreurUI(id, statutActuel, bouton) {
+      const nouveauStatut = statutActuel === 'Actif' ? 'Inactif' : 'Actif';
+      const restaurer = avecChargement(bouton, '...');
+      google.script.run
+        .withSuccessHandler(() => chargerListeEncadreurs())
+        .withFailureHandler(err => { restaurer(); alert("Erreur : " + err); })
+        .modifierStatutEncadreur(id, nouveauStatut, sessionToken);
+    }
+
+    // ---------------- SÉANCES (vue de supervision quotidienne) ----------------
+    function changerJourSeances(delta) {
+      const champ = document.getElementById('dateJourSeances');
+      const d = new Date(champ.value + 'T00:00:00');
+      d.setDate(d.getDate() + delta);
+      const nouvelleDate = d.toISOString().split('T')[0];
+      const aujourdhuiStr = new Date().toISOString().split('T')[0];
+      if (nouvelleDate > aujourdhuiStr) return; // pas de jour futur
+      champ.value = nouvelleDate;
+      chargerSeancesDuJour();
+    }
+
+    function chargerSeancesDuJour() {
+      const dateStr = document.getElementById('dateJourSeances').value;
+      const zone = document.getElementById('seancesJourUI');
+      const resume = document.getElementById('resumeJourSeances');
+      zone.innerHTML = '<div class="text-center text-sm text-gray-500 italic py-2">Chargement...</div>';
+      resume.innerText = '';
+
+      google.script.run
+        .withSuccessHandler(liste => {
+          if (liste.length === 0) {
+            zone.innerHTML = '<p class="text-sm text-gray-400 italic text-center py-4">Aucune séance ce jour-là.</p>';
+            return;
+          }
+
+          const nbEncadreurs = new Set(liste.map(s => s.idEncadreur)).size;
+          resume.innerText = liste.length + ' séance(s) · ' + nbEncadreurs + ' encadreur(s) actif(s)';
+
+          // Groupe par horaire (Matin/Soir), dans l'ordre chronologique naturel
+          // (tri alphabétique fonctionne ici : "Matin" < "Soir").
+          const groupes = {};
+          liste.forEach(s => {
+            if (!groupes[s.horaire]) groupes[s.horaire] = [];
+            groupes[s.horaire].push(s);
+          });
+
+          zone.innerHTML = Object.keys(groupes).sort().map(horaire => `
+            <div>
+              <div class="text-[10px] font-bold text-gray-400 uppercase mb-2">${horaire}</div>
+              <div class="space-y-2">
+                ${groupes[horaire].map(s => `
+                  <div class="p-3 rounded-lg border border-gray-100">
+                    <div class="flex justify-between items-start gap-2">
+                      <div>
+                        <div class="font-bold text-sm text-gray-800">${s.base} · ${s.niveau}${s.serie ? " " + s.serie : ""}${s.groupe ? " (Groupe " + s.groupe + ")" : ""}</div>
+                        <div class="text-[10px] text-gray-500 mt-1">${s.matieres.join(", ")}</div>
+                        <div class="text-[10px] text-gray-400 mt-1">Encadreur : ${s.nomEncadreur || "non assigné"}</div>
+                      </div>
+                      ${s.type !== "Normale" ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 shrink-0">${s.type}</span>` : ""}
+                    </div>
+                  </div>`).join("")}
+              </div>
+            </div>`).join('');
+        })
+        .withFailureHandler(err => { zone.innerHTML = '<p class="text-xs text-red-500 text-center">Erreur : ' + err + '</p>'; })
+        .getSeancesDuJour(dateStr, sessionToken);
+    }
+
+    // ---- Mon compte (changement de code) ----
+    function ouvrirModalMonCompte() {
+      document.getElementById('mcAncienPin').value = '';
+      document.getElementById('mcNouveauPin').value = '';
+      document.getElementById('mcConfirmPin').value = '';
+      document.getElementById('mcError').classList.add('hidden');
+      document.getElementById('mcSuccess').classList.add('hidden');
+      document.getElementById('modalMonCompte').classList.remove('hidden');
+    }
+
+    function fermerModalMonCompte() {
+      document.getElementById('modalMonCompte').classList.add('hidden');
+    }
+
+    function changerMonPinUI(bouton) {
+      const ancien = document.getElementById('mcAncienPin').value.trim();
+      const nouveau = document.getElementById('mcNouveauPin').value.trim();
+      const confirmation = document.getElementById('mcConfirmPin').value.trim();
+      const errDiv = document.getElementById('mcError');
+      const okDiv = document.getElementById('mcSuccess');
+      errDiv.classList.add('hidden');
+      okDiv.classList.add('hidden');
+
+      if (!ancien || !nouveau || !confirmation) {
+        errDiv.innerText = "Remplis les trois champs.";
+        errDiv.classList.remove('hidden');
+        return;
+      }
+      if (!/^\d{4,}$/.test(nouveau)) {
+        errDiv.innerText = "Le nouveau code doit contenir au moins 4 chiffres, rien d'autre.";
+        errDiv.classList.remove('hidden');
+        return;
+      }
+      if (nouveau !== confirmation) {
+        errDiv.innerText = "Les deux saisies du nouveau code ne correspondent pas.";
+        errDiv.classList.remove('hidden');
+        return;
+      }
+
+      const restaurer = avecChargement(bouton, 'Validation...');
+
+      google.script.run
+        .withSuccessHandler(msg => {
+          restaurer();
+          okDiv.innerText = msg;
+          okDiv.classList.remove('hidden');
+          document.getElementById('mcAncienPin').value = '';
+          document.getElementById('mcNouveauPin').value = '';
+          document.getElementById('mcConfirmPin').value = '';
+        })
+        .withFailureHandler(err => {
+          restaurer();
+          errDiv.innerText = err;
+          errDiv.classList.remove('hidden');
+        })
+        .changerMonPin(ancien, nouveau, sessionToken);
+    }
+
+    // ---------------- ENCAISSEMENT ----------------
+    let elevesBaseActuelle = [];
+
+    // 1. Changement de base : reconstruit la liste des classes disponibles
+    // (Kokrenou : 3e, 2nde-C et Tle-D fusionnés directement dans le choix de
+    // classe, chacun n'ayant qu'une seule série possible là-bas) et réinitialise la suite.
+    function onBasePaiementChange() {
+      const base = document.getElementById('basePaiement').value;
+      const wrapperNiveau = document.getElementById('wrapperNiveauPaiement');
+      const niveauSelect = document.getElementById('niveauPaiement');
+
+      document.getElementById('wrapperSeriePaiement').classList.add('hidden');
+      document.getElementById('seriePaiement').innerHTML = '';
+      document.getElementById('listeEleves').innerHTML = '<option value="">Choisir la classe d\'abord</option>';
+      document.getElementById('wrapperEleve').classList.add('opacity-50', 'pointer-events-none');
+      document.getElementById('grillePaiement').classList.add('hidden');
+
+      if (!base || !CONFIG) {
+        niveauSelect.innerHTML = '<option value="">Choisir la base d\'abord</option>';
+        wrapperNiveau.classList.add('opacity-50', 'pointer-events-none');
+        return;
+      }
+
+      wrapperNiveau.classList.remove('opacity-50', 'pointer-events-none');
+      if (base === 'Kokrenou') {
+        niveauSelect.innerHTML = '<option value="" disabled selected>-- Classe --</option><option value="3e">3e</option><option value="2nde:C">2nde C</option><option value="Tle:D">Tle D</option>';
+      } else {
+        niveauSelect.innerHTML = '<option value="" disabled selected>-- Classe --</option>' +
+          CONFIG.ordreNiveaux.map(n => `<option value="${n}">${n}</option>`).join('');
+      }
+    }
+
+    // 2. Changement de classe : affiche la série si pertinent (obligatoire pour
+    // la Tle chez Zaher puisqu'elle détermine la feuille à lire ; optionnelle
+    // pour 2nde/1ère ; jamais affichée pour Kokrenou, déjà fusionnée).
+    function onNiveauPaiementChange() {
+      const niveauRaw = document.getElementById('niveauPaiement').value;
+      const wrapperSerie = document.getElementById('wrapperSeriePaiement');
+      const serieSelect = document.getElementById('seriePaiement');
+      if (!CONFIG || !niveauRaw) return;
+
+      // Cas Kokrenou fusionné (valeur "Tle:D") : pas d'étape Série séparée.
+      if (niveauRaw.indexOf(':') !== -1) {
+        wrapperSerie.classList.add('hidden');
+        serieSelect.innerHTML = '';
+        chargerElevesParBase();
+        return;
+      }
+
+      const def = CONFIG.niveaux[niveauRaw];
+      const estScinde = (niveauRaw === 'Tle'); // doit rester cohérent avec NIVEAUX_SPLIT_PAR_SERIE côté serveur
+
+      if (def.series && def.series.length) {
+        wrapperSerie.classList.remove('hidden');
+        serieSelect.innerHTML =
+          (estScinde ? '<option value="" disabled selected>-- Série (obligatoire) --</option>' : '<option value="">Toutes séries</option>') +
+          def.series.map(s => `<option value="${s}">${s}</option>`).join('');
+
+        if (!estScinde) chargerElevesParBase(); // "Toutes séries" par défaut
+        // sinon (Tle chez Zaher, plusieurs séries) : on attend le choix de l'utilisateur
+      } else {
+        wrapperSerie.classList.add('hidden');
+        serieSelect.innerHTML = '';
+        chargerElevesParBase();
+      }
+    }
+
+    // 3. Chargement des élèves, ciblé sur (base, classe, série) — recherche rapide.
+    function chargerElevesParBase() {
+      const base = document.getElementById('basePaiement').value;
+      let niveau = document.getElementById('niveauPaiement').value;
+      let serie = document.getElementById('seriePaiement').value;
+
+      // Kokrenou fusionne niveau+série en une seule option (ex: "Tle:D")
+      if (niveau && niveau.indexOf(':') !== -1) {
+        const parts = niveau.split(':');
+        niveau = parts[0];
+        serie = parts[1];
+      }
+
+      const selectEleve = document.getElementById('listeEleves');
+      const wrapper = document.getElementById('wrapperEleve');
+      document.getElementById('grillePaiement').classList.add('hidden');
+
+      if (!base || !niveau) {
+        selectEleve.innerHTML = '<option value="">Choisir la classe d\'abord</option>';
+        wrapper.classList.add('opacity-50', 'pointer-events-none');
+        return;
+      }
+      if (niveau === 'Tle' && !serie) {
+        selectEleve.innerHTML = '<option value="">Choisir la série d\'abord</option>';
+        wrapper.classList.add('opacity-50', 'pointer-events-none');
+        return;
+      }
+
+      selectEleve.innerHTML = '<option>Chargement...</option>';
+      wrapper.classList.remove('opacity-50', 'pointer-events-none');
+
+      google.script.run
+        .withSuccessHandler(res => {
+          elevesBaseActuelle = res;
+          document.getElementById('rechercheEleve').value = '';
+          filtrerListeEleves();
+        })
+        .withFailureHandler(err => alert("Erreur : " + err))
+        .getElevesEtGrille(base, niveau, serie, sessionToken);
+    }
+
+    // Enlève les accents pour une recherche insensible aux accents/à la casse.
+    function normaliser(str) {
+      return (str || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    }
+
+    // Filtre la liste déroulante des élèves selon le texte tapé, sans nouvel
+    // appel serveur (la liste de la classe est déjà chargée en mémoire).
+    function filtrerListeEleves() {
+      const selectEleve = document.getElementById('listeEleves');
+      if (!elevesBaseActuelle || !elevesBaseActuelle.eleves) return;
+
+      const terme = normaliser(document.getElementById('rechercheEleve').value.trim());
+      const filtres = terme
+        ? elevesBaseActuelle.eleves.filter(e => normaliser(e.nom + ' ' + e.prenoms).includes(terme))
+        : elevesBaseActuelle.eleves;
+
+      if (filtres.length === 0) {
+        selectEleve.innerHTML = '<option value="">Aucun résultat</option>';
+      } else {
+        selectEleve.innerHTML = `<option value="">-- ${filtres.length} élève(s) --</option>` +
+          filtres.map(e => `<option value="${e.id}">${e.nom} ${e.prenoms}${e.serie ? ' — ' + e.serie : ''}</option>`).join('');
+      }
+    }
+
+    function afficherGrilleEleve() {
+      const id = document.getElementById('listeEleves').value;
+      const grille = document.getElementById('grillePaiement');
+      if (!id || !elevesBaseActuelle) { grille.classList.add('hidden'); return; }
+
+      const eleve = elevesBaseActuelle.eleves.find(e => e.id === id);
+      if (!eleve) { grille.classList.add('hidden'); return; }
+
+      grilleActuelle = { eleve: eleve, periodes: elevesBaseActuelle.periodes, base: document.getElementById('basePaiement').value };
+
+      document.getElementById('grilleEleveNom').innerText = eleve.nom + ' ' + eleve.prenoms;
+      document.getElementById('grilleEleveMontant').innerText = formatMoney(eleve.montantMensuel) + ' / mois';
+
+      let html = "";
+      grilleActuelle.periodes.forEach(p => {
+        const s = eleve.statutParPeriode[p.key];
+        let contenu, attrClic;
+        if (s.statut === 'avant') {
+          contenu = '—';
+          attrClic = '';
+        } else {
+          attrClic = `onclick="ouvrirModalPaiement('${p.key}','${p.label}')"`;
+          if (s.du === 0) contenu = 'Exo';
+          else if (s.statut === 'paye') contenu = 'Payé';
+          else contenu = formatMoney(s.du - s.paye) + ' rest.';
+        }
+        html += `<div class="mois-badge ${s.statut}" ${attrClic}>
+          ${abregerMois(p.label)}${s.ajuste ? ' *' : ''}<br>${contenu}
+        </div>`;
+      });
+      document.getElementById('grilleMois').innerHTML = html;
+      grille.classList.remove('hidden');
+    }
+
+    function ouvrirModalPaiement(key, label) {
+      const s = grilleActuelle.eleve.statutParPeriode[key];
+      periodeEnCours = key;
+      const suffixe = s.ajuste ? ' (montant ajusté)' : '';
+      document.getElementById('paiementPeriodeLabel').innerText = label + ' — dû : ' + formatMoney(s.du) + suffixe + (s.paye > 0 ? (' (déjà encaissé : ' + formatMoney(s.paye) + ')') : '');
+      document.getElementById('paiementMontant').value = Math.max(0, numSafe(s.du) - numSafe(s.paye));
+      document.getElementById('paiementMontant').max = Math.max(0, numSafe(s.du) - numSafe(s.paye));
+      document.getElementById('paiementTierce').value = '';
+      document.getElementById('paiementError').classList.add('hidden');
+      document.getElementById('blocAjustement').classList.add('hidden');
+      document.getElementById('ajustementMontant').value = numSafe(s.du);
+      document.getElementById('ajustementMotif').value = '';
+      document.getElementById('ajustementError').classList.add('hidden');
+      document.getElementById('modalPaiement').classList.remove('hidden');
+    }
+
+    function toggleAjustementCasSocial() {
+      document.getElementById('blocAjustement').classList.toggle('hidden');
+    }
+
+    function fermerModalPaiement() { document.getElementById('modalPaiement').classList.add('hidden'); }
+
+    function confirmerAjustementMontantDu() {
+      const montantDu = document.getElementById('ajustementMontant').value;
+      const motif = document.getElementById('ajustementMotif').value;
+      const errDiv = document.getElementById('ajustementError');
+      errDiv.classList.add('hidden');
+
+      if (montantDu === '' || parseFloat(montantDu) < 0) {
+        errDiv.innerText = "Montant dû invalide.";
+        errDiv.classList.remove('hidden');
+        return;
+      }
+
+      const btn = document.getElementById('btnEnregistrerAjustement');
+      btn.innerText = "Enregistrement..."; btn.disabled = true;
+
+      const payload = {
+        idEleve: grilleActuelle.eleve.id,
+        nomEleve: grilleActuelle.eleve.nom + ' ' + grilleActuelle.eleve.prenoms,
+        base: grilleActuelle.base,
+        periode: periodeEnCours,
+        montantDu: parseFloat(montantDu),
+        motif: motif,
+        encaisseur: currentEncaisseur
+      };
+
+      google.script.run
+        .withSuccessHandler(() => {
+          btn.innerText = "Enregistrer l'ajustement"; btn.disabled = false;
+          fermerModalPaiement();
+          chargerElevesParBase();
+          setTimeout(() => {
+            document.getElementById('listeEleves').value = grilleActuelle.eleve.id;
+            afficherGrilleEleve();
+          }, 300);
+        })
+        .withFailureHandler(m => {
+          btn.innerText = "Enregistrer l'ajustement"; btn.disabled = false;
+          errDiv.innerText = m;
+          errDiv.classList.remove('hidden');
+        })
+        .definirMontantDuPeriode(payload, sessionToken);
+    }
+
+    // ---------------- PAUSE / ABANDON (plage de mois) ----------------
+    function ouvrirModalPause() {
+      if (!grilleActuelle) return;
+      const periodes = grilleActuelle.periodes;
+      const optionsHtml = periodes.map(p => `<option value="${p.key}">${p.label}</option>`).join('');
+
+      const debutSelect = document.getElementById('pauseDebut');
+      const finSelect = document.getElementById('pauseFin');
+      debutSelect.innerHTML = optionsHtml;
+      finSelect.innerHTML = optionsHtml;
+      finSelect.value = periodes[periodes.length - 1].key; // par défaut : jusqu'à la fin
+      document.getElementById('pauseJusquaFin').checked = false;
+      finSelect.disabled = false;
+      document.getElementById('pauseMotif').value = '';
+      document.getElementById('pauseError').classList.add('hidden');
+      document.getElementById('modalPause').classList.remove('hidden');
+    }
+
+    function fermerModalPause() { document.getElementById('modalPause').classList.add('hidden'); }
+
+    function toggleUpauseJusquaFin() {
+      const coche = document.getElementById('pauseJusquaFin').checked;
+      const finSelect = document.getElementById('pauseFin');
+      if (coche) {
+        const periodes = grilleActuelle.periodes;
+        finSelect.value = periodes[periodes.length - 1].key;
+      }
+      finSelect.disabled = coche;
+    }
+
+    function confirmerPause() {
+      const periodeDebut = document.getElementById('pauseDebut').value;
+      const periodeFin = document.getElementById('pauseFin').value;
+      const motif = document.getElementById('pauseMotif').value || 'Pause';
+      const errDiv = document.getElementById('pauseError');
+      errDiv.classList.add('hidden');
+
+      const periodes = grilleActuelle.periodes;
+      const iDebut = periodes.findIndex(p => p.key === periodeDebut);
+      const iFin = periodes.findIndex(p => p.key === periodeFin);
+      if (iDebut === -1 || iFin === -1 || iFin < iDebut) {
+        errDiv.innerText = "La plage n'est pas valide (le mois de fin doit être après le mois de début).";
+        errDiv.classList.remove('hidden');
+        return;
+      }
+
+      const btn = document.getElementById('btnConfirmerPause');
+      btn.innerText = "Application..."; btn.disabled = true;
+
+      const payload = {
+        idEleve: grilleActuelle.eleve.id,
+        nomEleve: grilleActuelle.eleve.nom + ' ' + grilleActuelle.eleve.prenoms,
+        base: grilleActuelle.base,
+        periodeDebut: periodeDebut,
+        periodeFin: periodeFin,
+        montantDu: 0,
+        motif: motif,
+        encaisseur: currentEncaisseur
+      };
+
+      google.script.run
+        .withSuccessHandler(() => {
+          btn.innerText = "Appliquer"; btn.disabled = false;
+          fermerModalPause();
+          chargerElevesParBase();
+          setTimeout(() => {
+            document.getElementById('listeEleves').value = grilleActuelle.eleve.id;
+            afficherGrilleEleve();
+          }, 300);
+        })
+        .withFailureHandler(m => {
+          btn.innerText = "Appliquer"; btn.disabled = false;
+          errDiv.innerText = m;
+          errDiv.classList.remove('hidden');
+        })
+        .definirMontantDuPlage(payload, sessionToken);
+    }
+
+    function confirmerPaiementMensuel() {
+      const montant = parseFloat(document.getElementById('paiementMontant').value);
+      const moyen = document.getElementById('paiementMoyen').value;
+      const tierce = document.getElementById('paiementTierce').value;
+      const errDiv = document.getElementById('paiementError');
+      errDiv.classList.add('hidden');
+
+      if (!montant || montant <= 0) {
+        errDiv.innerText = "Montant invalide.";
+        errDiv.classList.remove('hidden');
+        return;
+      }
+
+      const s = grilleActuelle.eleve.statutParPeriode[periodeEnCours];
+      const restant = Math.max(0, numSafe(s.du) - numSafe(s.paye));
+      if (montant > restant) {
+        errDiv.innerText = "Le montant dépasse ce qui reste dû pour ce mois (" + formatMoney(restant) + " restant).";
+        errDiv.classList.remove('hidden');
+        return;
+      }
+
+      const btn = document.getElementById('btnConfirmerPaiement');
+      btn.innerText = "Enregistrement..."; btn.disabled = true;
+
+      const payload = {
+        idEleve: grilleActuelle.eleve.id,
+        nomEleve: grilleActuelle.eleve.nom + ' ' + grilleActuelle.eleve.prenoms,
+        base: grilleActuelle.base,
+        periode: periodeEnCours,
+        montant: montant,
+        moyen: moyen,
+        tierce: tierce,
+        encaisseur: currentEncaisseur
+      };
+
+      google.script.run
+        .withSuccessHandler(() => {
+          btn.innerText = "Confirmer"; btn.disabled = false;
+          fermerModalPaiement();
+          chargerElevesParBase();
+          setTimeout(() => {
+            document.getElementById('listeEleves').value = grilleActuelle.eleve.id;
+            afficherGrilleEleve();
+          }, 300);
+        })
+        .withFailureHandler(m => {
+          btn.innerText = "Confirmer"; btn.disabled = false;
+          errDiv.innerText = m;
+          errDiv.classList.remove('hidden');
+        })
+        .enregistrerPaiementMensuel(payload, sessionToken);
+    }
+
+    // ---------------- SOUMISSION — Inscription ----------------
+    document.getElementById('inscForm').onsubmit = function(e) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const btn = document.getElementById('btnSubmitInsc');
+      const errDiv = document.getElementById('errorMsg');
+      errDiv.classList.add('hidden');
+
+      // École "Autre" : on remplace par la saisie manuelle avant l'envoi.
+      if (data.ecole === 'Autre') {
+        if (!data.ecoleAutre || !data.ecoleAutre.trim()) {
+          errDiv.innerText = "Merci de préciser le nom de l'école.";
+          errDiv.classList.remove('hidden');
+          return;
+        }
+        data.ecole = data.ecoleAutre.trim();
+      }
+      delete data.ecoleAutre;
+
+      // Kokrenou fusionne niveau+série en une seule option (ex: "Tle:D")
+      if (data.niveau && data.niveau.indexOf(':') !== -1) {
+        const [n, s] = data.niveau.split(':');
+        data.niveau = n;
+        data.serie = s;
+      }
+
+      if (data.base === 'Kokrenou') {
+        const ok = (data.niveau === '3e') || (data.niveau === '2nde' && data.serie === 'C') || (data.niveau === 'Tle' && data.serie === 'D');
+        if (!ok) {
+          errDiv.innerText = "Kokrenou n'accueille que la 3e, la 2nde (série C) et la Tle (série D). Corrigez avant de valider.";
+          errDiv.classList.remove('hidden');
+          return;
+        }
+      }
+
+      btn.innerText = "Enregistrement..."; btn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(res => {
+          alert("Élève inscrit : " + res.nom + " (ID : " + res.id + ") — " + formatMoney(res.montantMensuel) + "/mois");
+          e.target.reset();
+          toggleEcoleAutre();
+          appliquerFiltreNiveauSelonBase();
+          peuplerMoisArrivee();
+          btn.innerText = "Valider l'Inscription"; btn.disabled = false;
+        })
+        .withFailureHandler(m => {
+          errDiv.innerText = m;
+          errDiv.classList.remove('hidden');
+          btn.innerText = "Valider l'Inscription"; btn.disabled = false;
+        })
+        .enregistrerEleve(data, currentEncaisseur, sessionToken);
+    };
+  </script>
+</body>
+</html>
