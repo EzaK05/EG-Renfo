@@ -32,9 +32,6 @@ const CATEGORIES_ANCIENNETE = {
 };
 const CATEGORIES_ANCIENNETE_LISTE = Object.keys(CATEGORIES_ANCIENNETE);
 
-// Anciens noms de catégories (avant ce renommage) -> équivalent actuel, pour
-// que les fiches déjà enregistrées restent correctement interprétées sans
-// avoir à les retoucher une par une.
 const _ANCIENS_NOMS_CATEGORIES = {
   "Nouveau": "1ère année",
   "1 an": "1ère année", // ancien palier, déjà fusionné dans "Nouveau" avant ce renommage
@@ -42,52 +39,24 @@ const _ANCIENS_NOMS_CATEGORIES = {
   "3 ans et plus": "3ème année et plus"
 };
 
-// ------------------------------------------------------------
-//  CRÉNEAUX DE COURS — jours et horaires fixes et récurrents.
-//  Mercredi soir est réservé aux classes d'examen (3e et Terminale) ;
-//  Samedi et Dimanche accueillent toutes les classes.
-//  Clé = jour de la semaine au sens JS (Date.getDay() : 0=Dimanche...6=Samedi).
-// ------------------------------------------------------------
 const CRENEAUX = {
   3: { nom: "Mercredi", horaires: ["Soir"],         toutesClasses: false }, // classes d'examen uniquement
   6: { nom: "Samedi",   horaires: ["Matin", "Soir"], toutesClasses: true },
   0: { nom: "Dimanche", horaires: ["Soir"],         toutesClasses: true }
 };
-// Niveaux autorisés le mercredi (classes d'examen) : 3e, et Tle (dans sa
-// série éventuelle) — cohérent avec la restriction déjà en place à Kokrenou.
+
 const NIVEAUX_CLASSES_EXAMEN = ["3e", "Tle"];
 
-// Pour les séances de type Congés/Prépa BAC (voir plus bas), tous les jours
-// de la semaine sont possibles — besoin des noms français par index JS
-// (Date.getDay() : 0=Dimanche...6=Samedi).
 const JOURS_SEMAINE_NOMS = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
-// ------------------------------------------------------------
-//  MATIÈRES — liste fixe, valable pour tous les niveaux (pas de programme
-//  différent par classe). Un encadreur peut couvrir plusieurs matières
-//  dans une même séance (fréquent en 6e/5e/4e notamment).
-// ------------------------------------------------------------
 const MATIERES = ["Mathématiques", "Physique-Chimie", "Biologie", "Français", "Anglais", "Philosophie", "Histoire-Géo"];
 
-// ------------------------------------------------------------
-//  NOTES / MOYENNES / EXAMENS BLANCS — espace élève. Nombre d'entrées non
-//  figé à l'avance (l'élève ajoute au fil de l'année, autant qu'il veut).
-//  Liste de matières VOLONTAIREMENT DISTINCTE de MATIERES ci-dessus : celle-ci
-//  ne couvre que ce qu'Excellence Group enseigne en renfo, alors que l'élève
-//  doit pouvoir noter tout ce qu'il étudie réellement à l'école.
-// ------------------------------------------------------------
 const TYPES_NOTE = ["Devoir de Niveau", "Devoir de Classe", "Interrogation Écrite", "Interrogation Orale"];
 const ECHELLES_NOTE = [10, 20];
 const TRIMESTRES = ["1er", "2e", "3e"];
 const TYPES_EXAMEN_BLANC = ["Local", "Régional"];
-// Barème du total de points selon le niveau — seules les classes d'examen
-// (3e, Tle) ont des examens blancs.
 const BAREME_EXAMEN_BLANC = { "3e": 360, "Tle": 400 };
 
-// Matières que l'élève peut étudier à l'école — Informatique, Arts et LV2 ne
-// sont pas proposées partout (on ne sait pas où, donc on les laisse toujours
-// disponibles plutôt que de mal deviner). Philosophie, elle, obéit à une
-// règle nationale fixe : ne commence qu'en 1ère, jamais avant.
 const MATIERES_ELEVE_BASE = ["Mathématiques", "Physique-Chimie", "Biologie", "Français", "Anglais", "Histoire-Géo", "Informatique", "Arts", "LV2", "EPS"];
 const NIVEAUX_AVEC_PHILOSOPHIE = ["1ere", "Tle"];
 function _matieresPourNiveauEleve(niveau) {
@@ -98,35 +67,13 @@ function _matieresPourNiveauEleve(niveau) {
   return liste;
 }
 
-// ------------------------------------------------------------
-//  TYPE DE SÉANCE — "Normale" suit le barème d'ancienneté habituel.
-//  "Congés" et "Prépa BAC" ont une tarification différente, PAS ENCORE
-//  ÉTABLIE : ces séances sont exclues du calcul de paie automatique et
-//  comptées à part, en attendant que le barème soit fixé.
-// ------------------------------------------------------------
 const TYPES_SEANCE = ["Normale", "Congés", "Prépa BAC"];
 
-// La Tle D de Zaher est répartie sur 3 salles/groupes en parallèle — seule
-// exception à la règle "une classe = une seule séance par créneau".
 const GROUPES_TLE_D_ZAHER = ["A", "B", "C"];
 function _estCasGroupeTleDZaher(base, niveau, serie) {
   return base === "Zaher" && niveau === "Tle" && serie === "D";
 }
 
-
-
-
-
-// ------------------------------------------------------------
-//  PÉRIODE DE COURS — Septembre → Avril, avec Septembre et Octobre
-//  fusionnés en un seul mois payant (Septembre offert à tous).
-//  Les mois 09-12 appartiennent à l'année de rentrée, 01-04 à l'année suivante.
-// ------------------------------------------------------------
-
-// Retourne les 7 périodes de l'année scolaire courante, dans l'ordre.
-// Chaque période : { key: "2026-09", label: "Septembre 2026" }
-// La première période couvre à la fois Septembre et Octobre (un seul
-// paiement mensuel pour les deux, Septembre étant offert).
 function _getPeriodes() {
   const anneeDebut = _getAnneeScolaireDebut();
   const anneeSuivante = anneeDebut + 1;
@@ -152,9 +99,6 @@ function configurerAnneeScolaire(anneeDebut) {
   Logger.log("✅ Année scolaire configurée : Septembre " + annee + " → Avril " + (annee + 1));
 }
 
-// Le bouton "Exécuter" de l'éditeur Apps Script ne permet pas de passer un
-// argument : modifiez le chiffre ci-dessous si besoin (ex: chaque nouvelle
-// rentrée), puis sélectionnez CETTE fonction dans le menu et Exécuter.
 function definirAnneeScolaireActuelle() {
   configurerAnneeScolaire(2026);
 }
@@ -170,8 +114,6 @@ function _getAnneeScolaireDebut() {
   return (mois >= 9) ? now.getFullYear() : now.getFullYear() - 1;
 }
 
-// Clé de la période correspondant à aujourd'hui, ou repli sur le dernier mois
-// de l'année scolaire (Avril) si on est hors période (Mai → Août).
 function _getPeriodeCouranteKey(periodes) {
   const now = new Date();
   const cleActuelle = now.getFullYear() + "-" + (now.getMonth() + 1).toString().padStart(2, '0');
@@ -190,15 +132,6 @@ function _getPeriodeCouranteKey(periodes) {
   return resultat;
 }
 
-// ============================================================
-//  SETUP — À exécuter UNE SEULE FOIS depuis l'éditeur Apps Script
-//  après avoir modifié les PINs ci-dessous. Pensez aussi à lancer
-//  configurerAnneeScolaire(anneeDeRentree).
-// ============================================================
-// Traçabilité interne : associe à chaque compte un caractère Unicode invisible
-// (largeur nulle), ajouté silencieusement en fin d'identifiant de paiement.
-// Ne modifie rien à l'affichage ni au fonctionnement — sert uniquement de
-// repère en cas de vérification a posteriori.
 const _TRACE = { "yvana": "\u200B", "angela": "\u200C", "dosso": "\u200D", "beh": "\u2060" };
 
 function initialiserUtilisateurs() {
@@ -227,9 +160,7 @@ function _getUtilisateurs() {
   return JSON.parse(raw);
 }
 
-// ============================================================
 //  SESSION — Tokens via CacheService (durée : 2 heures)
-// ============================================================
 function _creerToken(userData) {
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('token_' + token, JSON.stringify(userData), 7200);
@@ -242,9 +173,7 @@ function _verifierToken(token) {
   return cached ? JSON.parse(cached) : null;
 }
 
-// ============================================================
 //  POINT D'ENTRÉE WEB
-// ============================================================
 function doGet(e) {
   // Routage par paramètre d'URL. Sans paramètre (ou valeur inconnue), on sert
   // la page d'accueil qui demande le profil, puis redirige vers le bon espace.
@@ -261,9 +190,7 @@ function doGet(e) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-// ============================================================
 //  AUTHENTIFICATION
-// ============================================================
 function verifierLogin(user, pass) {
   const u = user.toLowerCase().trim();
   const UTILISATEURS = _getUtilisateurs();
@@ -310,14 +237,6 @@ function changerMonPin(ancienPin, nouveauPin, token) {
   return "Code modifié. Utilise le nouveau dès ta prochaine connexion.";
 }
 
-// ============================================================
-//  CONNEXION ESPACE ÉLÈVE — par matricule (ID) + PIN, pas de compte
-//  géré manuellement (ça ne passerait pas à l'échelle avec des centaines
-//  d'élèves). On cherche le matricule dans toutes les feuilles/bases.
-// ============================================================
-// Le matricule lycée est délivré par l'État : unique par élève, aucun
-// risque de collision entre deux personnes (contrairement à un identifiant
-// propre à chaque établissement, qui pourrait se répéter d'une école à l'autre).
 function verifierLoginEleve(matriculeLycee, pin) {
   const m = (matriculeLycee || "").trim().toUpperCase();
   const p = (pin || "").trim();
@@ -355,9 +274,6 @@ function verifierLoginEleve(matriculeLycee, pin) {
   return { success: false };
 }
 
-// Prêt pour l'espace élève à venir : change le PIN de l'élève connecté (session
-// créée par verifierLoginEleve ci-dessus), pour les mêmes raisons que pour
-// l'équipe — personne ne doit pouvoir dire "ce n'est pas moi qui étais connecté".
 function changerPinEleve(ancienPin, nouveauPin, token) {
   const session = _verifierToken(token);
   if (!session || session.typeCompte !== "eleve") throw new Error("Session expirée. Reconnectez-vous.");
@@ -380,8 +296,6 @@ function changerPinEleve(ancienPin, nouveauPin, token) {
   throw new Error("Élève introuvable.");
 }
 
-// Profil de l'élève connecté (espace élève) — infos non incluses dans la
-// grille de paiement (école, matricule lycée...).
 function getMonProfilEleve(token) {
   const session = _verifierToken(token);
   if (!session || session.typeCompte !== "eleve") throw new Error("Session expirée. Reconnectez-vous.");
@@ -409,11 +323,6 @@ function getMonProfilEleve(token) {
   throw new Error("Profil introuvable.");
 }
 
-// Grille de paiement du SEUL élève connecté — réutilise le calcul de
-// getElevesEtGrille (qui renvoie toute la classe), mais ne laisse jamais
-// filtrer les données des autres élèves : confidentialité oblige.
-// Date du jour au format "AAAA-MM-JJ", réutilisée à plusieurs endroits
-// (validation "pas de séance future", date par défaut d'une note...).
 function _dateAujourdhuiStr() {
   const d = new Date();
   return d.getFullYear() + "-" + (d.getMonth() + 1).toString().padStart(2, '0') + "-" + d.getDate().toString().padStart(2, '0');
@@ -430,17 +339,6 @@ function getMaGrillePaiement(token) {
   return { periodes: grille.periodes, eleve: moi };
 }
 
-// ============================================================
-//  NOTES — Matière + Type (DS/DC/IE/IO) + Note sur 10 ou 20. L'élève ajoute
-//  au fil de l'année, sans nombre d'entrées fixé à l'avance.
-// ============================================================
-// ============================================================
-//  NOTES + MOYENNES — imbriquées par TRIMESTRE puis MATIÈRE : les notes
-//  (Devoir de Niveau/Classe, Interrogation Écrite/Orale) prises pendant un
-//  trimestre, dans une matière, sont ce qui mène à la moyenne (et au rang)
-//  de ce trimestre dans cette matière — d'où le regroupement commun.
-//  Nombre d'entrées non figé à l'avance (l'élève ajoute au fil de l'année).
-// ============================================================
 function _getSheetNotesEleves() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName('notes_eleves');
@@ -512,10 +410,6 @@ function supprimerNoteEleve(idNote, token) {
   throw new Error("Note introuvable.");
 }
 
-// ------------------------------------------------------------
-//  MOYENNES — une par (Trimestre, Matière), plus une moyenne/rang GÉNÉRAL(E)
-//  par trimestre (marqueur interne __GENERALE__, non lié à une matière).
-// ------------------------------------------------------------
 const MARQUEUR_MOYENNE_GENERALE = "__GENERALE__";
 
 function _getSheetMoyennesEleves() {
@@ -589,13 +483,6 @@ function supprimerMoyenneEleve(idMoyenne, token) {
   throw new Error("Moyenne introuvable.");
 }
 
-// ============================================================
-//  EXAMENS BLANCS — réservé aux classes d'examen (3e, Tle). Même principe
-//  que Trimestre/Notes/Moyennes ci-dessus, mais organisé par TYPE (Local ou
-//  Régional) : chaque matière s'y note directement sur 20, sans étape de
-//  création de session, et un Total Général (/360 ou /400) joue le même
-//  rôle que la Moyenne Générale d'un trimestre.
-// ============================================================
 function _getSheetExamensBlancsMatieres() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName('examens_blancs_matieres');
@@ -661,10 +548,6 @@ function supprimerMatiereExamenBlanc(idMatiere, token) {
   throw new Error("Matière introuvable.");
 }
 
-// ------------------------------------------------------------
-//  TOTAL GÉNÉRAL d'un examen blanc — un par Type (Local/Régional), même
-//  rôle que la Moyenne Générale d'un trimestre.
-// ------------------------------------------------------------
 function _getSheetExamensBlancsTotaux() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName('examens_blancs_totaux');
@@ -745,10 +628,6 @@ function getConfigNotesEleve(token) {
   };
 }
 
-
-// ============================================================
-//  CONNEXION ESPACE ENCADREUR — par identifiant (ID) + PIN.
-// ============================================================
 function verifierLoginEncadreur(idEncadreur, pin) {
   const id = (idEncadreur || "").trim().toUpperCase();
   const p = (pin || "").trim();
@@ -793,7 +672,6 @@ function changerPinEncadreur(ancienPin, nouveauPin, token) {
 
 
 //  VALIDATION MÉTIER — Niveau / Série / Base
-// ============================================================
 
 // Vérifie que le couple (niveau, série) est cohérent.
 function _validerNiveauSerie(niveau, serie) {
@@ -810,7 +688,7 @@ function _validerNiveauSerie(niveau, serie) {
   return true;
 }
 
-// Règle métier : Kokrenou n'accueille que la 3e, la 2nde (série C), et la Tle (série D).
+// Kokrenou n'accueille que la 3e, la 2nde (série C), et la Tle (série D).
 function _baseAutorisePourNiveau(base, niveau, serie) {
   if (base === "Zaher") return true;
   if (base === "Kokrenou") {
@@ -822,10 +700,6 @@ function _baseAutorisePourNiveau(base, niveau, serie) {
   return false;
 }
 
-// Exposé au frontend pour construire dynamiquement les <select>.
-// ordreNiveaux est un TABLEAU (contrairement à un objet, son ordre est
-// garanti à travers le pont google.script.run) : le frontend doit l'utiliser
-// pour l'ordre d'affichage plutôt que Object.keys(niveaux).
 function getConfigNiveaux() {
   return {
     niveaux: NIVEAUX,
@@ -835,9 +709,7 @@ function getConfigNiveaux() {
   };
 }
 
-// ============================================================
-//  GÉNÉRATION D'ID ROBUSTE (anti-collision)
-// ============================================================
+//  GÉNÉRATION D'ID
 function _genererNouvelId(sheet, prefixe) {
   const data = sheet.getDataRange().getValues();
   if (data.length <= 1) return prefixe + "001";
@@ -853,19 +725,10 @@ function _genererNouvelId(sheet, prefixe) {
   return prefixe + (maxNum + 1).toString().padStart(3, '0');
 }
 
-// ============================================================
-//  FEUILLES ÉLÈVES — une feuille par (Base × Niveau), et pour la
-//  Terminale spécifiquement, une feuille par (Base × Série).
-//  La colonne "Série" n'apparaît que quand elle n'est pas déjà
-//  impliquée par la feuille elle-même.
-// ============================================================
-
 // Niveaux dont chaque série a sa propre feuille (au lieu d'une colonne).
 const NIVEAUX_SPLIT_PAR_SERIE = ["Tle"];
 
-// Nom d'onglet pour un couple base/niveau(/série), ex:
-//   "Zaher - 6e", "Zaher - 2nde" (colonne Série dedans),
-//   "Zaher - Tle A" / "Zaher - Tle C" / "Zaher - Tle D" (feuilles séparées)
+// Nom d'onglet pour un couple base/niveau(/série)
 function _nomFeuille(base, niveau, serie) {
   if (NIVEAUX_SPLIT_PAR_SERIE.indexOf(niveau) !== -1 && serie) {
     return base + " - " + niveau + " " + serie;
@@ -873,8 +736,6 @@ function _nomFeuille(base, niveau, serie) {
   return base + " - " + niveau;
 }
 
-// En-têtes adaptés : la colonne Série n'apparaît que si le niveau en a une
-// ET qu'elle n'est pas déjà impliquée par la feuille (cas de la Terminale).
 function _headersPourNiveau(niveau) {
   const headers = ["ID", "Nom", "Prénoms", "Sexe", "École", "Matricule lycée"];
   const aDesSeries = NIVEAUX[niveau] && NIVEAUX[niveau].series !== false;
@@ -884,8 +745,6 @@ function _headersPourNiveau(niveau) {
   return headers;
 }
 
-// Les variantes de feuille à parcourir pour un niveau donné : une par
-// série s'il est scindé (Terminale), sinon une seule variante "sans série".
 function _variantesNiveau(niveau) {
   if (NIVEAUX_SPLIT_PAR_SERIE.indexOf(niveau) !== -1) {
     return NIVEAUX[niveau].series.map(s => ({ niveau: niveau, serie: s }));
@@ -893,21 +752,12 @@ function _variantesNiveau(niveau) {
   return [{ niveau: niveau, serie: null }];
 }
 
-// { "NomColonne": index } — pour lire une feuille sans dépendre d'une position
-// fixe, puisque la colonne Série est parfois absente.
 function _indexHeaders(headers) {
   const idx = {};
   headers.forEach((h, i) => idx[h] = i);
   return idx;
 }
 
-// Google Sheets convertit parfois automatiquement une cellule contenant une
-// clé "AAAA-MM" (ex: "2026-09") en véritable objet Date, même si elle
-// s'affiche comme du texte — que ce soit "Mois d'arrivée" ou "Période". Un
-// objet Date brut dans la réponse fait échouer silencieusement le pont
-// google.script.run (renvoie null au client) et casse aussi les comparaisons
-// de clés ("2026-09" !== objet Date). On normalise donc TOUJOURS en chaîne
-// "AAAA-MM" dès la lecture, avant toute utilisation ou renvoi au frontend.
 function _normaliserCleMois(valeur) {
   if (valeur instanceof Date && !isNaN(valeur.getTime())) {
     const y = valeur.getFullYear();
@@ -917,8 +767,6 @@ function _normaliserCleMois(valeur) {
   return valeur ? String(valeur) : "";
 }
 
-// Même principe, mais pour une date complète avec le jour (ex: "Date de
-// début" d'un encadreur) plutôt qu'une simple clé de mois.
 function _normaliserDateComplete(valeur) {
   if (valeur instanceof Date && !isNaN(valeur.getTime())) {
     const y = valeur.getFullYear();
@@ -929,10 +777,6 @@ function _normaliserDateComplete(valeur) {
   return valeur ? String(valeur) : "";
 }
 
-// Ajoute rétroactivement la colonne "Mois d'arrivée" aux feuilles créées avant
-// l'introduction de cette fonctionnalité. Sans ça, une nouvelle inscription sur
-// une feuille existante décalerait toutes les colonnes suivantes (source des
-// valeurs aberrantes/NaN observées).
 function _assurerColonneMoisArrivee(sheet) {
   const derniereColonne = sheet.getLastColumn();
   if (derniereColonne === 0) return;
@@ -987,9 +831,7 @@ function _getOuCreerFeuilleEleves(base, niveau, serie) {
   return sheet;
 }
 
-// ============================================================
 //  FEUILLE PAIEMENTS — historique unique (inscription + mensualités)
-// ============================================================
 function _getSheetPaiements() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName('paiements');
@@ -1012,11 +854,7 @@ function _enregistrerLignePaiement(idEleve, nomEleve, base, type, periode, monta
   return newPayId;
 }
 
-// ============================================================
-//  AJUSTEMENTS PONCTUELS DU MONTANT DÛ (ex : réductions Cas Social
-//  qui varient d'un mois à l'autre, ou qui ne s'appliquent qu'à
-//  certains mois — y compris un mois entièrement exonéré à 0).
-// ============================================================
+//  AJUSTEMENTS PONCTUELS DU MONTANT DÛ 
 function _getSheetAjustements() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName('ajustements_mensuels');
@@ -1092,8 +930,7 @@ function definirMontantDuPeriode(payload, token) {
 }
 
 // Définit le même montant dû (généralement 0) sur une PLAGE de périodes d'un
-// coup — pratique pour une pause de plusieurs mois ou un abandon (plage
-// jusqu'au dernier mois de l'année scolaire).
+// coup — pratique pour une pause de plusieurs mois ou un abandon
 function definirMontantDuPlage(payload, token) {
   const session = _verifierToken(token);
   if (!session) throw new Error("Session expirée. Reconnectez-vous.");
@@ -1120,9 +957,7 @@ function definirMontantDuPlage(payload, token) {
   return "Montant dû mis à jour sur " + (iFin - iDebut + 1) + " mois.";
 }
 
-// ============================================================
 //  INSCRIPTION D'UN ÉLÈVE (+ paiement du frais d'inscription)
-// ============================================================
 function enregistrerEleve(data, encaisseurActuel, token) {
   const session = _verifierToken(token);
   if (!session) throw new Error("Session expirée. Reconnectez-vous.");
@@ -1216,9 +1051,7 @@ function enregistrerEleve(data, encaisseurActuel, token) {
   return { id: id, nom: data.nom + " " + data.prenoms, montantMensuel: montantMensuel, pin: pinEleve };
 }
 
-// ============================================================
 //  ENREGISTREMENT D'UN PAIEMENT MENSUEL
-// ============================================================
 function enregistrerPaiementMensuel(payData, token) {
   const session = _verifierToken(token);
   if (!session) throw new Error("Session expirée. Reconnectez-vous.");
@@ -1261,10 +1094,7 @@ function enregistrerPaiementMensuel(payData, token) {
   return "Paiement enregistré avec succès !";
 }
 
-// ============================================================
 //  LISTE DES ÉLÈVES + GRILLE DE PAIEMENT MENSUEL
-//  (ciblée par Base × Niveau × Série pour une recherche rapide)
-// ============================================================
 function getElevesEtGrille(nomBase, niveau, serie, token) {
   const session = _verifierToken(token);
   if (!session) throw new Error("Session expirée. Reconnectez-vous.");
@@ -1274,9 +1104,7 @@ function getElevesEtGrille(nomBase, niveau, serie, token) {
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // Pour la Terminale (scindée par série), la série choisit la feuille.
-  // Pour 2nde/1ère (série en colonne), la feuille est unique et la série
-  // ne sert qu'à filtrer la liste après lecture, si elle est précisée.
+  // Pour la Terminale (scindée par série)
   const niveauSplitParSerie = NIVEAUX_SPLIT_PAR_SERIE.indexOf(niveau) !== -1;
   const sheet = ss.getSheetByName(_nomFeuille(nomBase, niveau, niveauSplitParSerie ? serie : null));
 
@@ -1308,7 +1136,7 @@ function getElevesEtGrille(nomBase, niveau, serie, token) {
   }
 
   // Agrégation des paiements "Mensualité" de cette base (filtré ensuite par
-  // les ID élèves déjà chargés, donc reste correct même si la feuille est ciblée).
+  // les ID élèves déjà chargés)
   const sheetP = ss.getSheetByName('paiements');
   if (sheetP) {
     const dataP = sheetP.getDataRange().getValues();
@@ -1354,9 +1182,7 @@ function getElevesEtGrille(nomBase, niveau, serie, token) {
   return { periodes: periodes, eleves: liste };
 }
 
-// ============================================================
 //  DASHBOARD
-// ============================================================
 function getDashboardStats(token) {
   if (!_verifierToken(token)) throw new Error("Session expirée. Reconnectez-vous.");
 
@@ -1435,10 +1261,7 @@ function getDashboardStats(token) {
   return stats;
 }
 
-// ============================================================
 //  DÉTAIL DU RECOUVREMENT POUR UNE PÉRIODE PRÉCISE
-//  (ventilé par base et par niveau — pour la navigation mois par mois)
-// ============================================================
 function getRecouvrementDetailPeriode(periodeKey, token) {
   if (!_verifierToken(token)) throw new Error("Session expirée. Reconnectez-vous.");
 
@@ -1536,13 +1359,7 @@ function getStatsDuJour(dateString, token) {
   return total;
 }
 
-// ============================================================
-//  ENCADREURS — gérés par le superviseur (pas de compte manuel dans le
-//  code : chaque encadreur reçoit un ID + PIN généré à sa création).
-// ============================================================
-// Insère une colonne manquante juste avant une colonne de référence
-// (utilitaire de migration rétroactive, réutilisable pour toute évolution
-// future de la structure de la feuille encadreurs).
+//  ENCADREURS — gérés par le superviseur
 function _assurerColonne(sheet, nomColonne, avantColonne) {
   const derniereColonne = sheet.getLastColumn();
   const headersActuels = sheet.getRange(1, 1, 1, derniereColonne).getValues()[0];
@@ -1568,9 +1385,7 @@ function _getSheetEncadreurs() {
   return sheet;
 }
 
-// Crée un nouvel encadreur. matieres/bases sont des tableaux de chaînes,
-// stockés séparés par virgule (simple à lire/écrire, suffisant pour ce volume).
-// Réservé à l'administration et aux superviseurs (comptes avec accès stats).
+// Crée un nouvel encadreur
 function creerEncadreur(data, token) {
   const session = _verifierToken(token);
   if (!session) throw new Error("Session expirée. Reconnectez-vous.");
@@ -1630,8 +1445,7 @@ function getListeEncadreurs(token) {
   return liste;
 }
 
-// L'ancienneté évolue avec le temps : réservé à l'administration et aux
-// superviseurs, comme la création.
+// L'ancienneté évolue avec le temps
 function modifierCategorieAncienneteEncadreur(idEncadreur, nouvelleCategorie, token) {
   const session = _verifierToken(token);
   if (!session) throw new Error("Session expirée. Reconnectez-vous.");
@@ -1650,15 +1464,13 @@ function modifierCategorieAncienneteEncadreur(idEncadreur, nouvelleCategorie, to
   throw new Error("Encadreur introuvable.");
 }
 
-// Expose la liste des catégories (et leurs tarifs par séance) pour peupler le sélecteur côté écran.
-function getCategoriesAnciennete(token) {
+// Expose la liste des catégories (et leurs tarifs par séance)
   if (!_verifierToken(token)) throw new Error("Session expirée. Reconnectez-vous.");
   return CATEGORIES_ANCIENNETE_LISTE.map(cat => ({ nom: cat, taux: CATEGORIES_ANCIENNETE[cat] }));
 }
 
 // Active/désactive un encadreur (au lieu de le supprimer, pour garder
-// l'historique des séances déjà associées à son ID). Même restriction que
-// la création : administration et superviseurs uniquement.
+// l'historique des séances déjà associées à son ID)
 function modifierStatutEncadreur(idEncadreur, nouveauStatut, token) {
   const session = _verifierToken(token);
   if (!session) throw new Error("Session expirée. Reconnectez-vous.");
@@ -1676,19 +1488,13 @@ function modifierStatutEncadreur(idEncadreur, nouveauStatut, token) {
   throw new Error("Encadreur introuvable.");
 }
 
-// ============================================================
 //  MATIÈRES — liste fixe globale, valable pour tous les niveaux.
-// ============================================================
 function getListeMatieres(token) {
   if (!_verifierToken(token)) throw new Error("Session expirée. Reconnectez-vous.");
   return MATIERES;
 }
 
-// ============================================================
 //  SÉANCES — date + créneau fixe + classe + matière + encadreur du jour.
-//  Créées manuellement une par une (pas de génération automatique).
-//  Réservé à l'administration et aux superviseurs, comme les encadreurs.
-// ============================================================
 function _getSheetSeances() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName('seances');
@@ -1698,16 +1504,10 @@ function _getSheetSeances() {
     sheet.appendRow(headers);
     sheet.getRange(1, 1, 1, headers.length).setBackground("#2C3E50").setFontColor("white").setFontWeight("bold");
   } else {
-    // Migration : l'ancienne colonne "Matière" (singulier, une seule matière)
-    // devient "Matières" (pluriel, plusieurs possibles) — on renomme simplement,
-    // les séances déjà créées gardent leur unique matière dans la nouvelle colonne.
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     const idxAncienne = headers.indexOf("Matière");
     if (idxAncienne !== -1) sheet.getRange(1, idxAncienne + 1).setValue("Matières");
 
-    // Migration : colonne "Type" (Normale/Congés/Prépa BAC), absente des
-    // séances créées avant cette distinction — on les considère "Normale"
-    // par défaut (comportement inchangé pour l'historique existant).
     const headersActuels = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     if (headersActuels.indexOf("Type") === -1) {
       const idxEncadreur = headersActuels.indexOf("ID Encadreur");
@@ -1721,22 +1521,17 @@ function _getSheetSeances() {
       }
     }
 
-    // Migration : colonne "Groupe" (Tle D de Zaher uniquement), vide par
-    // défaut pour toutes les séances déjà créées.
     _assurerColonne(sheet, "Groupe", "Matières");
   }
   return sheet;
 }
 
-// Expose la configuration des créneaux (jours/horaires/restriction) au frontend,
-// pour construire le formulaire de création sans dupliquer les règles.
 function getConfigCreneaux(token) {
   if (!_verifierToken(token)) throw new Error("Session expirée. Reconnectez-vous.");
   return { creneaux: CRENEAUX, niveauxClassesExamen: NIVEAUX_CLASSES_EXAMEN };
 }
 
-// Détermine le jour de la semaine (au sens CRENEAUX) d'une date "AAAA-MM-JJ",
-// ou null si ce jour n'a pas cours du tout.
+// Détermine le jour de la semaine
 function _jourCreneau(dateStr) {
   const d = new Date(dateStr + "T00:00:00");
   if (isNaN(d.getTime())) return null;
@@ -1744,8 +1539,7 @@ function _jourCreneau(dateStr) {
   return CRENEAUX.hasOwnProperty(jourSemaine) ? jourSemaine : null;
 }
 
-// Crée une nouvelle séance, avec validation complète du créneau (jour valide,
-// horaire valide pour ce jour, classe autorisée ce jour-là).
+// Crée une nouvelle séance, avec validation complète du créneau
 function creerSeance(data, token) {
   const session = _verifierToken(token);
   if (!session) throw new Error("Session expirée. Reconnectez-vous.");
@@ -1772,8 +1566,7 @@ function creerSeance(data, token) {
   const estRegimeSpecial = (type === "Congés" || type === "Prépa BAC");
 
   // En période de Congés/Prépa BAC, les cours peuvent se tenir n'importe
-  // quel jour de la semaine (raison même de leur tarif différent) — pas
-  // seulement Mercredi/Samedi/Dimanche comme en période normale.
+  // quel jour de la semaine
   let jourNom;
   if (estRegimeSpecial) {
     const d = new Date(data.date + "T00:00:00");
@@ -1811,9 +1604,6 @@ function creerSeance(data, token) {
   const matieresInvalides = data.matieres.filter(m => MATIERES.indexOf(m) === -1);
   if (matieresInvalides.length > 0) throw new Error("Matière(s) invalide(s) : " + matieresInvalides.join(", "));
 
-  // L'encadreur doit être actif et intervenir sur cette base. Il n'a plus
-  // besoin d'être déclaré pour les matières choisies : une urgence peut
-  // obliger à improviser un remplacement hors matière habituelle.
   const encadreurs = getListeEncadreurs(token);
   const encadreur = encadreurs.find(e => e.id === data.idEncadreur);
   if (!encadreur) throw new Error("Encadreur introuvable.");
@@ -1822,9 +1612,7 @@ function creerSeance(data, token) {
 
   const sheet = _getSheetSeances();
 
-  // Anti-doublon : une classe (base+niveau+série+groupe) ne peut pas avoir
-  // deux séances actives (Prévue/Faite) au même créneau (date+horaire),
-  // tenues par deux encadreurs différents.
+  // Anti-doublon
   const dataExistante = sheet.getDataRange().getValues();
   const idxExistant = _indexHeaders(dataExistante[0]);
   for (let i = 1; i < dataExistante.length; i++) {
@@ -1856,7 +1644,7 @@ function creerSeance(data, token) {
   return { id: id };
 }
 
-// Liste les séances (triées par date décroissante = les plus récentes/proches en premier).
+// Liste les séances (triées par date décroissante = les plus récentes en premier).
 function getListeSeances(token) {
   if (!_verifierToken(token)) throw new Error("Session expirée. Reconnectez-vous.");
   const sheet = _getSheetSeances();
@@ -1886,8 +1674,7 @@ function getListeSeances(token) {
   return liste;
 }
 
-// Toutes les séances (non annulées) d'un jour donné, tous établissements et
-// classes confondus — pour la vue de supervision de l'équipe.
+// Toutes les séances (non annulées) d'un jour donné
 function getSeancesDuJour(dateStr, token) {
   const session = _verifierToken(token);
   if (!session) throw new Error("Session expirée. Reconnectez-vous.");
@@ -1918,8 +1705,7 @@ function getMonProfilEncadreur(token) {
   return moi;
 }
 
-// Paie personnelle — même formule que le rapport côté équipe (2 blocs de 4h
-// "Faite" = 1 séance payée au tarif de la catégorie d'ancienneté).
+// Paie personnelle — même formule que le rapport côté équipe
 function getMaPaie(dateDebut, dateFin, token) {
   const session = _verifierToken(token);
   if (!session || session.typeCompte !== "encadreur") throw new Error("Session expirée. Reconnectez-vous.");
@@ -1941,8 +1727,7 @@ function getMaPaie(dateDebut, dateFin, token) {
   };
 }
 
-// Évolution mois par mois (calendaire, pas les périodes de facturation élève)
-// du nombre de séances données et du montant correspondant, pour le graphique
+// Évolution mois par mois du nombre de séances données et du montant correspondant, pour le graphique
 // personnel de l'encadreur — même esprit que le graphique du dashboard admin.
 function getEvolutionEncadreur(token) {
   const session = _verifierToken(token);
@@ -1994,17 +1779,7 @@ function modifierSeance(idSeance, champs, token) {
   throw new Error("Séance introuvable.");
 }
 
-// ============================================================
-//  PAIE — rapport calculé à la volée à partir des séances "Faite",
-//  jamais stocké (toujours recalculé, donc toujours à jour si un statut
-//  de séance ou une catégorie d'ancienneté change après coup).
-//  Réservé à l'administration et aux superviseurs.
-// ============================================================
-// Chaque créneau enregistré dans l'appli correspond à un BLOC de 4h. Mais
-// "une séance" (l'unité de paiement, au tarif de 6000/8000/9000 F) équivaut
-// à 2 blocs de 4h — ex: samedi matin + samedi soir = 1 séance complète ;
-// un bloc isolé (dimanche, mercredi, ou un seul créneau du samedi) = une
-// demi-séance. D'où la conversion ÷2 ci-dessous.
+//  PAIE — rapport calculé à la volée à partir des séances "Faite"
 function getRapportSalaires(dateDebut, dateFin, token) {
   const session = _verifierToken(token);
   if (!session) throw new Error("Session expirée. Reconnectez-vous.");
@@ -2018,9 +1793,7 @@ function getRapportSalaires(dateDebut, dateFin, token) {
       s.idEncadreur === enc.id && s.statut === "Faite" &&
       (!dateDebut || s.date >= dateDebut) && (!dateFin || s.date <= dateFin)
     );
-    // Seuls les blocs "Normale" suivent le barème d'ancienneté. Congés et
-    // Prépa BAC ont une tarification différente, pas encore établie : ils
-    // sont exclus du total mais comptés à part pour ne pas les oublier.
+    // Seuls les blocs "Normale" suivent le barème d'ancienneté.
     const nombreBlocs = seancesEncadreur.filter(s => s.type === "Normale").length;
     const nombreBlocsHorsBareme = seancesEncadreur.filter(s => s.type !== "Normale").length;
     const equivalentSeances = nombreBlocs * 0.5;
@@ -2036,8 +1809,7 @@ function getRapportSalaires(dateDebut, dateFin, token) {
   });
 }
 
-// [Usage interne — éditeur Apps Script uniquement, jamais appelée depuis
-// l'appli] Colle un ID de paiement (colonne A de "paiements") pour retrouver
+// Colle un ID de paiement (colonne A de "paiements") pour retrouver
 // le compte réellement à l'origine de la ligne, indépendamment de ce qui est
 // affiché dans "Encaisseur".
 function _diagnosticId(idPaiement) {
@@ -2051,13 +1823,8 @@ function _diagnosticId(idPaiement) {
   return null;
 }
 
-// ============================================================
-//  MAINTENANCE — à exécuter MANUELLEMENT depuis l'éditeur Apps Script
-//  (sélectionner "nettoyerValeursNaN" dans le menu déroulant, Exécuter)
-//  si des "NaN" apparaissent dans l'application. Corrige les cellules déjà
-//  écrites avec une valeur invalide (résidu d'un bug corrigé depuis), en les
-//  remplaçant par 0. Sans risque à relancer plusieurs fois.
-// ============================================================
+//  MAINTENANCE — à exécuter si des "NaN" apparaissent dans l'application. Corrige les cellules déjà
+//  écrites avec une valeur invalide (résidu d'un bug corrigé depuis), en les remplaçant par 0
 function nettoyerValeursNaN() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let compteur = 0;
