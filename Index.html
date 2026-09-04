@@ -699,8 +699,7 @@
       onBaseNiveauChange();
     }
 
-    // Filet de sécurité : les listes sont déjà filtrées en amont, donc ce
-    // bandeau ne devrait plus jamais s'afficher en usage normal.
+    // Filet de sécurité
     function onBaseNiveauChange() {
       const base = document.getElementById('baseInsc').value;
       const niveau = document.getElementById('niveauInsc').value;
@@ -1254,9 +1253,7 @@
     // ---------------- ENCAISSEMENT ----------------
     let elevesBaseActuelle = [];
 
-    // 1. Changement de base : reconstruit la liste des classes disponibles
-    // (Kokrenou : 3e, 2nde-C et Tle-D fusionnés directement dans le choix de
-    // classe, chacun n'ayant qu'une seule série possible là-bas) et réinitialise la suite.
+    // 1. Changement de base
     function onBasePaiementChange() {
       const base = document.getElementById('basePaiement').value;
       const wrapperNiveau = document.getElementById('wrapperNiveauPaiement');
@@ -1283,16 +1280,14 @@
       }
     }
 
-    // 2. Changement de classe : affiche la série si pertinent (obligatoire pour
-    // la Tle chez Zaher puisqu'elle détermine la feuille à lire ; optionnelle
-    // pour 2nde/1ère ; jamais affichée pour Kokrenou, déjà fusionnée).
+    // 2. Changement de classe
     function onNiveauPaiementChange() {
       const niveauRaw = document.getElementById('niveauPaiement').value;
       const wrapperSerie = document.getElementById('wrapperSeriePaiement');
       const serieSelect = document.getElementById('seriePaiement');
       if (!CONFIG || !niveauRaw) return;
 
-      // Cas Kokrenou fusionné (valeur "Tle:D") : pas d'étape Série séparée.
+      // Cas Kokrenou fusionné (valeur "Tle:D")
       if (niveauRaw.indexOf(':') !== -1) {
         wrapperSerie.classList.add('hidden');
         serieSelect.innerHTML = '';
@@ -1364,8 +1359,7 @@
       return (str || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     }
 
-    // Filtre la liste déroulante des élèves selon le texte tapé, sans nouvel
-    // appel serveur (la liste de la classe est déjà chargée en mémoire).
+    // Filtre la liste déroulante des élèves selon le texte tapé, sans nouvel appel serveur
     function filtrerListeEleves() {
       const selectEleve = document.getElementById('listeEleves');
       if (!elevesBaseActuelle || !elevesBaseActuelle.eleves) return;
