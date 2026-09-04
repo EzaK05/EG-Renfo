@@ -1,23 +1,11 @@
-// ============================================================
-//  EXCELLENCE GROUP — COURS DE RENFO (Yamoussoukro) — Code.gs
-//  Adapté depuis la version Prépas INP.
-//  - 2 bases physiques : Zaher (tous niveaux) / Kokrenou (3e, 2nde série C, Tle série D)
-//  - Frais d'inscription unique (5 000 FCFA) + mensualités (Sept → Avril)
-//  - Montant mensuel dépend du niveau, sauf Cas Social (montant custom)
-// ============================================================
-
-// ------------------------------------------------------------
 //  BASES PHYSIQUES → préfixe utilisé pour générer les ID élèves
-// ------------------------------------------------------------
 const BASES = {
   "Zaher":    "ZAH",
   "Kokrenou": "KOK"
 };
 const BASES_LISTE = Object.keys(BASES);
 
-// ------------------------------------------------------------
 //  NIVEAUX — série autorisée (false = pas de série) + tarif mensuel
-// ------------------------------------------------------------
 const NIVEAUX = {
   "6e":   { series: false,               montantMensuel: 5000 },
   "5e":   { series: false,               montantMensuel: 5000 },
@@ -30,7 +18,6 @@ const NIVEAUX = {
 const NIVEAUX_LISTE = Object.keys(NIVEAUX);
 
 // Code court utilisé dans la génération des ID élèves (préfixe base + niveau + série)
-// Ex: ZAH + 6 + 001 → "ZAH6001" ; ZAH + 2 + A + 001 → "ZAH2A001"
 const NIVEAU_CODES = {
   "6e": "6", "5e": "5", "4e": "4", "3e": "3",
   "2nde": "2", "1ere": "1", "Tle": "T"
@@ -38,11 +25,6 @@ const NIVEAU_CODES = {
 
 const FRAIS_INSCRIPTION_STANDARD = 5000;
 
-// ------------------------------------------------------------
-//  ANCIENNETÉ ENCADREUR — 3 paliers, chacun avec un montant DIRECT par
-//  séance (FCFA), hors congés et hors prépa BAC. Choisie manuellement,
-//  pas recalculée depuis une date de début.
-// ------------------------------------------------------------
 const CATEGORIES_ANCIENNETE = {
   "1ère année":         6000,
   "2ème année":         8000,
