@@ -1465,6 +1465,7 @@ function modifierCategorieAncienneteEncadreur(idEncadreur, nouvelleCategorie, to
 }
 
 // Expose la liste des catégories (et leurs tarifs par séance)
+function getCategoriesAnciennete(token) {
   if (!_verifierToken(token)) throw new Error("Session expirée. Reconnectez-vous.");
   return CATEGORIES_ANCIENNETE_LISTE.map(cat => ({ nom: cat, taux: CATEGORIES_ANCIENNETE[cat] }));
 }

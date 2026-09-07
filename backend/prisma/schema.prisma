@@ -1,0 +1,510 @@
+// Schéma Prisma — Phase 2 du plan d'architecture (roadmap dans C:\Users\DELL\.claude\plans\ce-projet-doit-etre-indexed-bachman.md)
+// Remplace les onglets Google Sheets + constantes JS codées en dur (BASES, NIVEAUX, CRENEAUX, CATEGORIES_ANCIENNETE...)
+// Principe directeur : "Localité" est une dimension de premier ordre dès le départ, même avec une seule ligne aujourd'hui,
+// pour que l'ajout d'une nouvelle localité plus tard soit additif (des lignes en base) plutôt qu'une réécriture.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Neon : connexion "pooled" (via PgBouncer) pour les requêtes runtime de l'app.
+  url       = env("DATABASE_URL")
+  // Neon : connexion "direct" (non poolée) requise par les migrations Prisma.
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// LOCALITÉ / CONFIGURATION — tout ce qui était une constante JS devient une table.
+// ---------------------------------------------------------------------------
+
+model Locality {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  timezone  String   @default("Africa/Abidjan")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  bases         Base[]
+  niveaux       Niveau[]
+  scheduleSlots ScheduleSlot[]
+  seniorityTiers SeniorityTier[]
+  periods       Period[]
+  userAccounts  UserAccount[]
+
+  @@map("localities")
+}
+
+model Base {
+  id         String   @id @default(cuid())
+  localityId String   @map("locality_id")
+  locality   Locality @relation(fields: [localityId], references: [id])
+  name       String
+  // Préfixe court utilisé pour générer les identifiants élèves (ex: "ZAH", "KOK") — remplace la constante BASES.
+  code       String
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  allowlist    BaseNiveauAllowlist[]
+  tariffs      Tariff[]
+  students     Student[]
+  enrollments  Enrollment[]
+  payments     Payment[]
+  sessions     Session[]
+  tutorBases   TutorBase[]
+  userAccounts UserAccount[]
+
+  @@unique([localityId, name])
+  @@map("bases")
+}
+
+model Niveau {
+  id         String    @id @default(cuid())
+  // Nullable : un niveau peut être partagé par toutes les localités (curriculum commun) ou spécifique à une seule.
+  localityId String?   @map("locality_id")
+  locality   Locality? @relation(fields: [localityId], references: [id])
+  name       String
+  // Code court utilisé dans la génération d'ID (ex: "6", "5", "T") — remplace NIVEAU_CODES.
+  code       String
+  hasSeries  Boolean   @default(false) @map("has_series")
+  sortOrder  Int       @map("sort_order")
+
+  series       Serie[]
+  allowlist    BaseNiveauAllowlist[]
+  tariffs      Tariff[]
+  niveauMatieres NiveauMatiere[]
+  students     Student[]
+  enrollments  Enrollment[]
+  sessions     Session[]
+
+  @@unique([localityId, name])
+  @@map("niveaux")
+}
+
+model Serie {
+  id       String @id @default(cuid())
+  niveauId String @map("niveau_id")
+  niveau   Niveau @relation(fields: [niveauId], references: [id])
+  name     String // "A", "C", "D"...
+
+  allowlist   BaseNiveauAllowlist[]
+  tariffs     Tariff[]
+  students    Student[]
+  enrollments Enrollment[]
+  sessions    Session[]
+
+  @@unique([niveauId, name])
+  @@map("series")
+}
+
+// Remplace entièrement _baseAutorisePourNiveau() : "Kokrenou n'accepte que 3e / 2nde-C / Tle-D"
+// devient 3 lignes ici au lieu d'un if() codé en dur. Ajouter une base = insérer des lignes.
+model BaseNiveauAllowlist {
+  id       String  @id @default(cuid())
+  baseId   String  @map("base_id")
+  base     Base    @relation(fields: [baseId], references: [id])
+  niveauId String  @map("niveau_id")
+  niveau   Niveau  @relation(fields: [niveauId], references: [id])
+  serieId  String? @map("serie_id")
+  serie    Serie?  @relation(fields: [serieId], references: [id])
+
+  @@unique([baseId, niveauId, serieId])
+  @@map("base_niveau_allowlist")
+}
+
+// Remplace le tarif unique codé en dur dans NIVEAUX + le "montant personnalisé Cas Social" saisi à la main.
+// Donne un historique réel (effectiveFrom/effectiveTo) quand les tarifs changent d'une année sur l'autre.
+model Tariff {
+  id                String    @id @default(cuid())
+  baseId            String?   @map("base_id")
+  base              Base?     @relation(fields: [baseId], references: [id])
+  niveauId          String    @map("niveau_id")
+  niveau            Niveau    @relation(fields: [niveauId], references: [id])
+  serieId           String?   @map("serie_id")
+  serie             Serie?    @relation(fields: [serieId], references: [id])
+  monthlyAmount     Decimal   @map("monthly_amount") @db.Decimal(10, 2)
+  registrationFee   Decimal   @map("registration_fee") @db.Decimal(10, 2)
+  effectiveFrom     DateTime  @map("effective_from")
+  effectiveTo       DateTime? @map("effective_to")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  @@map("tariffs")
+}
+
+// Remplace CRENEAUX (créneaux horaires fixes par jour de semaine).
+model ScheduleSlot {
+  id                  String    @id @default(cuid())
+  localityId          String?   @map("locality_id")
+  locality            Locality? @relation(fields: [localityId], references: [id])
+  dayOfWeek           Int       @map("day_of_week") // 0=Dimanche ... 6=Samedi
+  label                String   // "Matin", "Soir"
+  appliesToAllNiveaux Boolean   @default(true) @map("applies_to_all_niveaux")
+
+  sessions Session[]
+
+  @@map("schedule_slots")
+}
+
+model Matiere {
+  id   String @id @default(cuid())
+  name String @unique
+
+  niveauMatieres NiveauMatiere[]
+  tutorMatieres  TutorMatiere[]
+  sessionMatieres SessionMatiere[]
+  studentGrades  StudentGrade[]
+  studentAverages StudentAverage[]
+  mockExamSubjectScores MockExamSubjectScore[]
+
+  @@map("matieres")
+}
+
+// Remplace la règle codée en dur qui insère "Philosophie" pour les niveaux 1ere/Tle (_matieresPourNiveauEleve).
+model NiveauMatiere {
+  id       String  @id @default(cuid())
+  niveauId String  @map("niveau_id")
+  niveau   Niveau  @relation(fields: [niveauId], references: [id])
+  matiereId String @map("matiere_id")
+  matiere  Matiere @relation(fields: [matiereId], references: [id])
+  sortOrder Int    @default(0) @map("sort_order")
+
+  @@unique([niveauId, matiereId])
+  @@map("niveau_matieres")
+}
+
+model School {
+  id   String @id @default(cuid())
+  name String @unique
+
+  students Student[]
+
+  @@map("schools")
+}
+
+// Remplace CATEGORIES_ANCIENNETE + le mapping de migration _ANCIENS_NOMS_CATEGORIES.
+model SeniorityTier {
+  id            String    @id @default(cuid())
+  localityId    String?   @map("locality_id")
+  locality      Locality? @relation(fields: [localityId], references: [id])
+  name          String    // "1ère année", "2ème année", "3ème année et plus"
+  ratePerSession Decimal  @map("rate_per_session") @db.Decimal(10, 2)
+  sortOrder     Int       @default(0) @map("sort_order")
+
+  tutors Tutor[]
+
+  @@map("seniority_tiers")
+}
+
+// Remplace _getPeriodes() calculé à la volée depuis PropertiesService.
+model Period {
+  id                  String   @id @default(cuid())
+  localityId          String   @map("locality_id")
+  locality            Locality @relation(fields: [localityId], references: [id])
+  key                 String   // "2026-09"
+  label               String   // "Septembre-Octobre 2026"
+  schoolYearStartYear Int      @map("school_year_start_year")
+  sortOrder           Int      @map("sort_order")
+
+  payments           Payment[]
+  monthlyAdjustments MonthlyAdjustment[]
+
+  @@unique([localityId, key])
+  @@map("periods")
+}
+
+// ---------------------------------------------------------------------------
+// ÉLÈVES / INSCRIPTIONS / PAIEMENTS
+// ---------------------------------------------------------------------------
+
+model Student {
+  id              String    @id @default(cuid())
+  baseId          String    @map("base_id")
+  base            Base      @relation(fields: [baseId], references: [id])
+  niveauId        String    @map("niveau_id")
+  niveau          Niveau    @relation(fields: [niveauId], references: [id])
+  serieId         String?   @map("serie_id")
+  serie           Serie?    @relation(fields: [serieId], references: [id])
+  firstName       String    @map("first_name")
+  lastName        String    @map("last_name")
+  sex             String
+  schoolId        String?   @map("school_id")
+  school          School?   @relation(fields: [schoolId], references: [id])
+  matriculeLycee  String?   @map("matricule_lycee")
+  phoneStudent    String?   @map("phone_student")
+  phoneParent     String?   @map("phone_parent")
+  isCasSocial     Boolean   @default(false) @map("is_cas_social")
+  registrationDate DateTime @default(now()) @map("registration_date")
+  pinHash         String    @map("pin_hash")
+  displayId       String    @unique @map("display_id") // ex: "ZAH6001" — généré à partir de base.code + niveau.code, pas de la constante BASES.
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  enrollments        Enrollment[]
+  payments            Payment[]
+  monthlyAdjustments  MonthlyAdjustment[]
+  grades              StudentGrade[]
+  averages            StudentAverage[]
+  mockExamSubjectScores MockExamSubjectScore[]
+  mockExamTotals      MockExamTotal[]
+
+  @@map("students")
+}
+
+// Historique des inscriptions — permet de suivre un élève qui change de classe/base sans perdre l'historique
+// (impossible dans le modèle actuel "un onglet par Base×Niveau×Série").
+model Enrollment {
+  id                     String    @id @default(cuid())
+  studentId              String    @map("student_id")
+  student                Student   @relation(fields: [studentId], references: [id])
+  baseId                 String    @map("base_id")
+  base                   Base      @relation(fields: [baseId], references: [id])
+  niveauId               String    @map("niveau_id")
+  niveau                 Niveau    @relation(fields: [niveauId], references: [id])
+  serieId                String?   @map("serie_id")
+  serie                  Serie?    @relation(fields: [serieId], references: [id])
+  startDate              DateTime  @map("start_date") // "Mois d'arrivée"
+  endDate                DateTime? @map("end_date")
+  monthlyAmountOverride  Decimal?  @map("monthly_amount_override") @db.Decimal(10, 2) // Cas Social
+  registrationFeeOverride Decimal? @map("registration_fee_override") @db.Decimal(10, 2)
+
+  @@map("enrollments")
+}
+
+enum PaymentType {
+  INSCRIPTION
+  MENSUALITE
+}
+
+// Table à plus fort enjeu de correctness — chaque champ typé/FK remplace une string libre ou (pour l'auditeur)
+// le hack des caractères Unicode invisibles _TRACE utilisé aujourd'hui pour retrouver qui a vraiment encaissé.
+model Payment {
+  id               String      @id @default(cuid())
+  studentId        String      @map("student_id")
+  student          Student     @relation(fields: [studentId], references: [id])
+  baseId           String      @map("base_id")
+  base             Base        @relation(fields: [baseId], references: [id])
+  type             PaymentType
+  periodId         String?     @map("period_id") // null pour un paiement "Inscription"
+  period           Period?     @relation(fields: [periodId], references: [id])
+  amount           Decimal     @db.Decimal(10, 2)
+  paymentMethod    String      @map("payment_method") // "Espèces", "Wave", "Orange Money"
+  payerNote        String?     @map("payer_note") // "encaissé par un tiers"
+  collectedByUserId String     @map("collected_by_user_id")
+  collectedByUser  UserAccount @relation(fields: [collectedByUserId], references: [id])
+  createdAt        DateTime    @default(now()) @map("created_at")
+
+  @@index([studentId, periodId])
+  @@map("payments")
+}
+
+model MonthlyAdjustment {
+  id           String      @id @default(cuid())
+  studentId    String      @map("student_id")
+  student      Student     @relation(fields: [studentId], references: [id])
+  periodId     String      @map("period_id")
+  period       Period      @relation(fields: [periodId], references: [id])
+  amountDue    Decimal     @map("amount_due") @db.Decimal(10, 2)
+  reason       String?
+  setByUserId  String      @map("set_by_user_id")
+  setByUser    UserAccount @relation(fields: [setByUserId], references: [id])
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  @@index([studentId, periodId])
+  @@map("monthly_adjustments")
+}
+
+// ---------------------------------------------------------------------------
+// ENCADREURS / SÉANCES / PAIE
+// ---------------------------------------------------------------------------
+
+enum TutorStatus {
+  ACTIF
+  INACTIF
+}
+
+model Tutor {
+  id              String       @id @default(cuid())
+  firstName       String       @map("first_name")
+  lastName        String       @map("last_name")
+  phone           String?
+  seniorityTierId String       @map("seniority_tier_id")
+  seniorityTier   SeniorityTier @relation(fields: [seniorityTierId], references: [id])
+  status          TutorStatus  @default(ACTIF)
+  pinHash         String       @map("pin_hash")
+  displayId       String       @unique @map("display_id") // ex: "ENC001"
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  bases    TutorBase[]
+  matieres TutorMatiere[]
+  sessions Session[]
+
+  @@map("tutors")
+}
+
+model TutorBase {
+  id      String @id @default(cuid())
+  tutorId String @map("tutor_id")
+  tutor   Tutor  @relation(fields: [tutorId], references: [id])
+  baseId  String @map("base_id")
+  base    Base   @relation(fields: [baseId], references: [id])
+
+  @@unique([tutorId, baseId])
+  @@map("tutor_bases")
+}
+
+model TutorMatiere {
+  id        String  @id @default(cuid())
+  tutorId   String  @map("tutor_id")
+  tutor     Tutor   @relation(fields: [tutorId], references: [id])
+  matiereId String  @map("matiere_id")
+  matiere   Matiere @relation(fields: [matiereId], references: [id])
+
+  @@unique([tutorId, matiereId])
+  @@map("tutor_matieres")
+}
+
+enum SessionType {
+  NORMALE
+  CONGES
+  PREPA_BAC
+}
+
+enum SessionStatus {
+  PREVUE
+  FAITE
+  ANNULEE
+}
+
+model Session {
+  id             String        @id @default(cuid())
+  date           DateTime
+  scheduleSlotId String?       @map("schedule_slot_id")
+  scheduleSlot   ScheduleSlot? @relation(fields: [scheduleSlotId], references: [id])
+  baseId         String        @map("base_id")
+  base           Base          @relation(fields: [baseId], references: [id])
+  niveauId       String        @map("niveau_id")
+  niveau         Niveau        @relation(fields: [niveauId], references: [id])
+  serieId        String?       @map("serie_id")
+  serie          Serie?        @relation(fields: [serieId], references: [id])
+  // Groupe libre (remplace le cas spécial codé en dur GROUPES_TLE_D_ZAHER) — vide sauf si une base/niveau
+  // donné répartit ses élèves sur plusieurs salles en parallèle.
+  groupLabel     String?       @map("group_label")
+  type           SessionType   @default(NORMALE)
+  tutorId        String        @map("tutor_id")
+  tutor          Tutor         @relation(fields: [tutorId], references: [id])
+  status         SessionStatus @default(FAITE)
+  createdByUserId String?      @map("created_by_user_id")
+  createdByUser  UserAccount?  @relation(fields: [createdByUserId], references: [id])
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  matieres SessionMatiere[]
+
+  @@map("sessions")
+}
+
+model SessionMatiere {
+  id        String  @id @default(cuid())
+  sessionId String  @map("session_id")
+  session   Session @relation(fields: [sessionId], references: [id])
+  matiereId String  @map("matiere_id")
+  matiere   Matiere @relation(fields: [matiereId], references: [id])
+
+  @@unique([sessionId, matiereId])
+  @@map("session_matieres")
+}
+
+// ---------------------------------------------------------------------------
+// NOTES / MOYENNES / EXAMENS BLANCS (espace élève)
+// ---------------------------------------------------------------------------
+
+model StudentGrade {
+  id        String   @id @default(cuid())
+  studentId String   @map("student_id")
+  student   Student  @relation(fields: [studentId], references: [id])
+  matiereId String   @map("matiere_id")
+  matiere   Matiere  @relation(fields: [matiereId], references: [id])
+  trimestre String   // "1er", "2e", "3e"
+  type      String   // "Devoir de Niveau", "Devoir de Classe", "Interrogation Écrite", "Interrogation Orale"
+  value     Float
+  scale     Int      // 10 ou 20
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("student_grades")
+}
+
+model StudentAverage {
+  id        String   @id @default(cuid())
+  studentId String   @map("student_id")
+  student   Student  @relation(fields: [studentId], references: [id])
+  matiereId String?  @map("matiere_id") // null = moyenne générale
+  matiere   Matiere? @relation(fields: [matiereId], references: [id])
+  trimestre String
+  value     Float
+  rang      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("student_averages")
+}
+
+enum ExamType {
+  LOCAL
+  REGIONAL
+}
+
+model MockExamSubjectScore {
+  id        String   @id @default(cuid())
+  studentId String   @map("student_id")
+  student   Student  @relation(fields: [studentId], references: [id])
+  examType  ExamType @map("exam_type")
+  matiereId String   @map("matiere_id")
+  matiere   Matiere  @relation(fields: [matiereId], references: [id])
+  score     Float
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("mock_exam_subject_scores")
+}
+
+model MockExamTotal {
+  id        String   @id @default(cuid())
+  studentId String   @map("student_id")
+  student   Student  @relation(fields: [studentId], references: [id])
+  examType  ExamType @map("exam_type")
+  total     Float
+  bareme    Float
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("mock_exam_totals")
+}
+
+// ---------------------------------------------------------------------------
+// COMPTES STAFF / RBAC
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  ADMIN
+  SUPERVISOR
+  STAFF
+}
+
+// Remplace initialiserUtilisateurs() (liste codée en dur dans PropertiesService).
+model UserAccount {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  passwordHash  String    @map("password_hash")
+  displayName   String    @map("display_name")
+  role          UserRole  @default(STAFF)
+  // Nullable = accès à toutes les bases (ex: admin, superviseur) ; sinon compte verrouillé sur une base.
+  baseId        String?   @map("base_id")
+  base          Base?     @relation(fields: [baseId], references: [id])
+  canSeeStats   Boolean   @default(false) @map("can_see_stats")
+  localityId    String?   @map("locality_id")
+  locality      Locality? @relation(fields: [localityId], references: [id])
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  paymentsCollected   Payment[]
+  adjustmentsSet      MonthlyAdjustment[]
+  sessionsCreated     Session[]
+
+  @@map("user_accounts")
+}
