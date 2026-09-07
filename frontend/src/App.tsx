@@ -1,11 +1,11 @@
 import { Route, Routes } from "react-router-dom";
 import { RequireAuth } from "./auth/RequireAuth";
 import { Landing } from "./pages/Landing";
-import { StaffHome } from "./pages/staff/StaffHome";
+import { StaffApp } from "./pages/staff/StaffApp";
 import { StaffLogin } from "./pages/staff/StaffLogin";
-import { StudentHome } from "./pages/student/StudentHome";
+import { StudentApp } from "./pages/student/StudentApp";
 import { StudentLogin } from "./pages/student/StudentLogin";
-import { TutorHome } from "./pages/tutor/TutorHome";
+import { TutorApp } from "./pages/tutor/TutorApp";
 import { TutorLogin } from "./pages/tutor/TutorLogin";
 
 export default function App() {
@@ -18,7 +18,7 @@ export default function App() {
         path="/equipe"
         element={
           <RequireAuth kind="staff" redirectTo="/equipe/connexion">
-            <StaffHome />
+            <StaffApp />
           </RequireAuth>
         }
       />
@@ -28,7 +28,7 @@ export default function App() {
         path="/eleve"
         element={
           <RequireAuth kind="student" redirectTo="/eleve/connexion">
-            <StudentHome />
+            <StudentApp />
           </RequireAuth>
         }
       />
@@ -38,7 +38,7 @@ export default function App() {
         path="/encadreur"
         element={
           <RequireAuth kind="tutor" redirectTo="/encadreur/connexion">
-            <TutorHome />
+            <TutorApp />
           </RequireAuth>
         }
       />

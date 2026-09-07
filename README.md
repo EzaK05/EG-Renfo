@@ -1,8 +1,11 @@
-# Excellence Group — nouvelle stack (Phase 1 du plan)
+# Excellence Group — nouvelle stack
 
-Ce dépôt contient maintenant deux choses :
-- `Code.gs` / `Index.html` — l'app Google Apps Script existante (espace équipe), à garder fonctionnelle pendant la transition (voir Phase 0 du plan).
-- `backend/` et `frontend/` — la nouvelle stack : Express + Prisma + PostgreSQL (Neon) côté backend, React + Vite côté frontend.
+Migration totale vers une nouvelle stack (décision du 2026-09-07 : pas de coexistence prolongée avec Google
+Apps Script). Ce dépôt contient :
+- `Code.gs` / `Index.html` — l'ancienne app Google Apps Script, conservée comme référence de comportement
+  pendant la vérification de parité, pas comme filet de secours permanent (voir Phase 3 du plan).
+- `backend/` et `frontend/` — la nouvelle stack : Express + Prisma + PostgreSQL (Neon) côté backend, React +
+  Vite côté frontend. **Fonctionnellement complète** — toute la logique métier de `Code.gs` est portée.
 
 Le plan complet (contexte, phases, schéma de données, stratégie de migration) est dans
 `C:\Users\DELL\.claude\plans\ce-projet-doit-etre-indexed-bachman.md`.
@@ -20,7 +23,7 @@ Le plan complet (contexte, phases, schéma de données, stratégie de migration)
      `prisma migrate` échoue avec une erreur de connexion peu claire — vérifie toujours avant de coller.
 4. **Branches Neon** (utile plus tard, pas obligatoire maintenant) : tu peux créer une branche `dev` séparée de `main`
    pour ne jamais développer contre les données réelles une fois qu'il y en aura — chaque branche a ses propres
-   chaînes de connexion. Pour l'instant, une seule branche suffit tant qu'il n'y a pas de données de production.
+   chaînes de connexion.
 
 ## 2. Configurer et démarrer le backend
 
@@ -30,16 +33,17 @@ cp .env.example .env
 # Édite .env : colle DATABASE_URL et DIRECT_URL (étape 1), et génère un SESSION_SECRET :
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
-npm install                # déjà fait si tu reprends cette session, sinon nécessaire
+npm install                          # déjà fait si tu reprends cette session, sinon nécessaire
 npx prisma migrate dev --name init   # crée les tables dans Neon à partir de prisma/schema.prisma
-npm run prisma:seed        # peuple la config de base (localité, bases Zaher/Kokrenou, niveaux, tarifs...)
-npm run dev                 # démarre l'API sur http://localhost:3000
+npm run prisma:seed                  # peuple la config (localité, bases, niveaux, tarifs, écoles, créneaux...)
+npm run dev                           # démarre l'API sur http://localhost:3000
 ```
 
-Le seed crée un compte staff de test : `admin` / `change-me-now` (à changer dès que possible — pas encore
-d'écran "changer mon mot de passe" côté frontend, ce sera à ajouter avec le reste de l'espace équipe).
+Le seed crée un compte staff de test : `admin` / `change-me-now` (à changer via "Mon compte" une fois connecté —
+si cet écran n'existe pas encore côté frontend, utilise `POST /api/auth/change-credential`).
 
 Vérifie que l'API répond : `curl http://localhost:3000/health` → `{"ok":true}`.
+Lance les tests unitaires (calculs financiers, paie, génération d'ID) : `npm test`.
 
 ## 3. Démarrer le frontend
 
@@ -49,24 +53,34 @@ npm install                 # déjà fait si tu reprends cette session, sinon n�
 npm run dev                  # démarre sur http://localhost:5173, proxy /api vers localhost:3000
 ```
 
-Ouvre http://localhost:5173 : page d'accueil avec le choix des 3 espaces. Connecte-toi à l'espace Équipe avec
-`admin` / `change-me-now` pour valider que toute la chaîne (frontend → backend → Neon) fonctionne.
+Ouvre http://localhost:5173 : page d'accueil avec le choix des 3 espaces.
 
-## 4. Ce qui existe déjà / ce qu'il reste à faire
+## 4. Ce qui est fonctionnellement complet
 
-Construit dans cette session :
-- Schéma Prisma complet (Phase 2 du plan) : localités, bases, niveaux/séries, tarifs, allowlist base×niveau,
-  créneaux, matières, élèves, inscriptions, paiements, ajustements, encadreurs, séances, notes/moyennes/examens blancs, comptes staff.
-- Auth par cookie de session (JWT httpOnly) pour les 3 types de comptes (staff/élève/encadreur), avec middleware
-  `requireAuth`/`requireStats` centralisé (remplace les vérifications `_verifierToken` répétées dans `Code.gs`).
-- Page d'accueil + 3 pages de connexion + 3 pages protégées (encore vides) côté frontend.
+**Backend** — toute la logique métier de `Code.gs` est portée avec parité de comportement (mêmes règles,
+mêmes messages d'erreur) : config de référence, inscription + grille de paiement + encaissement + ajustements,
+tableau de bord, encadreurs, séances (avec toute la validation créneaux/groupes/anti-doublon), paie, espace
+élève (profil/grille/notes/moyennes/examens blancs), auth des 3 types de comptes.
 
-Pas encore fait (prochaines étapes, dans l'ordre du plan — Phase 3) :
-- Espace élève : profil, notes, moyennes, examens blancs (lire `Code.gs` : `getMonProfilEleve`, `getMesNotes`,
-  `getMesMoyennes`, `getMesMatieresExamensBlancs`, `getMesTotauxExamensBlancs` pour le contrat à reproduire).
-- Espace encadreur : mes séances, ma paie (`getMesSeancesEncadreur`, `getMaPaie`, `getEvolutionEncadreur`).
-- Espace staff/admin : inscriptions, encaissement, gestion encadreurs/séances, tableau de bord — c'est la
-  partie à migrer avec le plus de soin (paiements en dernier, avec période d'écriture miroir, voir Phase 3).
-- Script ETL Sheets → Postgres (`migration/etl-sheets-to-postgres.ts`) une fois prêt à migrer les vraies données.
-- Correction du bug Code.gs (déjà fait dans ce dépôt) à recopier dans l'éditeur Apps Script en ligne — l'app
-  GAS déployée est probablement encore cassée tant que ce n'est pas fait manuellement là-bas.
+**Frontend** — les 3 espaces sont construits :
+- **Équipe** (`/equipe`) : Inscription, Encaissement (grille avec paiement/ajustement/pause), Équipe
+  (Encadreurs/Séances/Paie), Tableau de bord (avec graphique d'évolution) — reproduit l'app GAS en production.
+- **Élève** (`/eleve`) : profil, grille de paiement en lecture seule, notes/moyennes/examens blancs — n'a
+  jamais existé en GAS, construit ici à partir du contrat backend déjà spécifié.
+- **Encadreur** (`/encadreur`) : mes séances, ma paie, mon évolution — idem, jamais existé en GAS.
+
+## 5. Ce qu'il reste à faire avant de considérer la migration terminée
+
+- **Tester réellement contre Neon** : tout ce qui précède a été typechecké et buildé, mais jamais exécuté
+  contre une vraie base — première vérification à faire une fois `backend/.env` rempli.
+- **Vérification de parité** (Phase 3 du plan) : comparer les résultats de l'espace équipe (inscriptions,
+  paiements, dashboard) entre l'ancienne app GAS et la nouvelle stack sur des cas réels avant de considérer
+  GAS obsolète.
+- **Migration des données existantes**, si le Sheet contient déjà des inscriptions/paiements réels : écrire
+  le script ETL ponctuel (`migration/etl-sheets-to-postgres.ts`, pas encore créé) qui lit chaque onglet via
+  l'API Sheets et peuple Postgres — sinon la nouvelle base démarre vide.
+- **Écran "Mon compte"** (changer son code) côté frontend — l'endpoint backend existe
+  (`POST /api/auth/change-credential`) mais n'est pas encore branché à une page/modal.
+- Le bug de syntaxe dans `Code.gs` a été corrigé dans ce dépôt (ligne 1467) mais reste à recopier dans
+  l'éditeur Apps Script en ligne si l'app GAS doit continuer à servir de référence de comportement
+  pendant la vérification de parité.

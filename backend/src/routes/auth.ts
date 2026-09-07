@@ -72,7 +72,7 @@ authRouter.post("/login/student", async (req, res) => {
     serieId: student.serieId,
   });
   res.cookie(SESSION_COOKIE_NAME, token, cookieOptions);
-  res.json({ id: student.id, nom: student.lastName, prenoms: student.firstName });
+  res.json({ id: student.displayId, nom: student.lastName, prenoms: student.firstName });
 });
 
 // ---- Encadreur (équivalent verifierLoginEncadreur) ----
@@ -97,7 +97,55 @@ authRouter.post("/login/tutor", async (req, res) => {
 
   const token = signSession({ kind: "tutor", sub: tutor.id });
   res.cookie(SESSION_COOKIE_NAME, token, cookieOptions);
-  res.json({ id: tutor.id, nom: tutor.lastName, prenoms: tutor.firstName });
+  res.json({ id: tutor.displayId, nom: tutor.lastName, prenoms: tutor.firstName });
+});
+
+// ---- Changer son propre code (équivalent changerMonPin / changerPinEleve / changerPinEncadreur) ----
+// Un seul endpoint pour les 3 types de compte : évite de dupliquer 3 fois la même mécanique
+// (vérifier l'ancien code, valider le format du nouveau, hasher, enregistrer).
+const changeCredentialSchema = z.object({ ancien: z.string().min(1), nouveau: z.string().min(1) });
+
+authRouter.post("/change-credential", async (req, res) => {
+  if (!req.session) return res.status(401).json({ error: "Session expirée. Reconnectez-vous." });
+  const parsed = changeCredentialSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Ancien et nouveau code requis." });
+  const { ancien, nouveau } = parsed.data;
+
+  if (req.session.kind === "staff") {
+    if (nouveau.length < 4) return res.status(400).json({ error: "Le nouveau code doit contenir au moins 4 caractères." });
+    const user = await prisma.userAccount.findUnique({ where: { id: req.session.sub } });
+    if (!user || !(await argon2.verify(user.passwordHash, ancien))) return res.status(400).json({ error: "Ancien code incorrect." });
+    await prisma.userAccount.update({ where: { id: user.id }, data: { passwordHash: await argon2.hash(nouveau) } });
+  } else if (req.session.kind === "student") {
+    if (!/^\d{4,}$/.test(nouveau)) return res.status(400).json({ error: "Le nouveau code doit contenir au moins 4 chiffres." });
+    const student = await prisma.student.findUnique({ where: { id: req.session.sub } });
+    if (!student || !(await argon2.verify(student.pinHash, ancien))) return res.status(400).json({ error: "Ancien code incorrect." });
+    await prisma.student.update({ where: { id: student.id }, data: { pinHash: await argon2.hash(nouveau) } });
+  } else {
+    if (!/^\d{4,}$/.test(nouveau)) return res.status(400).json({ error: "Le nouveau code doit contenir au moins 4 chiffres." });
+    const tutor = await prisma.tutor.findUnique({ where: { id: req.session.sub } });
+    if (!tutor || !(await argon2.verify(tutor.pinHash, ancien))) return res.status(400).json({ error: "Ancien code incorrect." });
+    await prisma.tutor.update({ where: { id: tutor.id }, data: { pinHash: await argon2.hash(nouveau) } });
+  }
+
+  res.json({ message: "Code modifié. Utilise le nouveau dès ta prochaine connexion." });
+});
+
+// ---- Déverrouillage temporaire des stats (équivalent verifierCodeSpecifique) ----
+// Un compte staff sans accès stats peut débloquer temporairement l'onglet Statistiques/Équipe en
+// saisissant le mot de passe d'UN compte qui, lui, a cet accès (ex: la superviseure).
+const verifyStatsSchema = z.object({ password: z.string().min(1) });
+
+authRouter.post("/verify-stats-access", async (req, res) => {
+  if (!req.session) return res.status(401).json({ error: "Session expirée. Reconnectez-vous." });
+  const parsed = verifyStatsSchema.safeParse(req.body);
+  if (!parsed.success) return res.json({ authorized: false });
+
+  const candidats = await prisma.userAccount.findMany({ where: { canSeeStats: true, active: true } });
+  for (const c of candidats) {
+    if (await argon2.verify(c.passwordHash, parsed.data.password)) return res.json({ authorized: true });
+  }
+  res.json({ authorized: false });
 });
 
 authRouter.post("/logout", (_req, res) => {

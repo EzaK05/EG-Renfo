@@ -25,14 +25,15 @@ async function main() {
   });
 
   // NIVEAUX (série, code court pour l'ID, tarif mensuel) — reprend exactement la constante NIVEAUX de Code.gs.
+  // isExamClass/mockExamBareme reprennent NIVEAUX_CLASSES_EXAMEN + BAREME_EXAMEN_BLANC (3e et Tle uniquement).
   const niveauxDef = [
-    { name: "6e", code: "6", hasSeries: false, series: [] as string[], montantMensuel: 5000, sortOrder: 1 },
-    { name: "5e", code: "5", hasSeries: false, series: [], montantMensuel: 5000, sortOrder: 2 },
-    { name: "4e", code: "4", hasSeries: false, series: [], montantMensuel: 7000, sortOrder: 3 },
-    { name: "3e", code: "3", hasSeries: false, series: [], montantMensuel: 15000, sortOrder: 4 },
-    { name: "2nde", code: "2", hasSeries: true, series: ["C", "A"], montantMensuel: 10000, sortOrder: 5 },
-    { name: "1ere", code: "1", hasSeries: true, series: ["A", "C", "D"], montantMensuel: 10000, sortOrder: 6 },
-    { name: "Tle", code: "T", hasSeries: true, series: ["A", "C", "D"], montantMensuel: 15000, sortOrder: 7 },
+    { name: "6e", code: "6", hasSeries: false, series: [] as string[], montantMensuel: 5000, sortOrder: 1, isExamClass: false, mockExamBareme: null as number | null },
+    { name: "5e", code: "5", hasSeries: false, series: [], montantMensuel: 5000, sortOrder: 2, isExamClass: false, mockExamBareme: null },
+    { name: "4e", code: "4", hasSeries: false, series: [], montantMensuel: 7000, sortOrder: 3, isExamClass: false, mockExamBareme: null },
+    { name: "3e", code: "3", hasSeries: false, series: [], montantMensuel: 15000, sortOrder: 4, isExamClass: true, mockExamBareme: 360 },
+    { name: "2nde", code: "2", hasSeries: true, series: ["C", "A"], montantMensuel: 10000, sortOrder: 5, isExamClass: false, mockExamBareme: null },
+    { name: "1ere", code: "1", hasSeries: true, series: ["A", "C", "D"], montantMensuel: 10000, sortOrder: 6, isExamClass: false, mockExamBareme: null },
+    { name: "Tle", code: "T", hasSeries: true, series: ["A", "C", "D"], montantMensuel: 15000, sortOrder: 7, isExamClass: true, mockExamBareme: 400 },
   ];
 
   const fraisInscriptionStandard = 5000;
@@ -51,6 +52,8 @@ async function main() {
         code: def.code,
         hasSeries: def.hasSeries,
         sortOrder: def.sortOrder,
+        isExamClass: def.isExamClass,
+        mockExamBareme: def.mockExamBareme,
       },
     });
     niveauxParNom[def.name] = niveau;
@@ -138,6 +141,55 @@ async function main() {
         create: { niveauId: niveau.id, matiereId: matiere.id, sortOrder: i },
       });
     }
+  }
+
+  // CRENEAUX — reprend exactement la constante CRENEAUX de Code.gs (jour de semaine -> horaires + accès classes d'examen).
+  const creneauxDef = [
+    { dayOfWeek: 3, label: "Soir", appliesToAllNiveaux: false }, // Mercredi soir : classes d'examen uniquement
+    { dayOfWeek: 6, label: "Matin", appliesToAllNiveaux: true }, // Samedi
+    { dayOfWeek: 6, label: "Soir", appliesToAllNiveaux: true },
+    { dayOfWeek: 0, label: "Soir", appliesToAllNiveaux: true }, // Dimanche
+  ];
+  for (const def of creneauxDef) {
+    const existing = await prisma.scheduleSlot.findFirst({
+      where: { localityId: locality.id, dayOfWeek: def.dayOfWeek, label: def.label },
+    });
+    if (!existing) {
+      await prisma.scheduleSlot.create({
+        data: { localityId: locality.id, dayOfWeek: def.dayOfWeek, label: def.label, appliesToAllNiveaux: def.appliesToAllNiveaux },
+      });
+    }
+  }
+
+  // SESSION_GROUPS — reprend GROUPES_TLE_D_ZAHER : seule la Tle D de Zaher est répartie sur 3 salles.
+  const tleSerieD = seriesParNiveauSerie["Tle:D"];
+  for (const label of ["A", "B", "C"]) {
+    const existing = await prisma.sessionGroup.findFirst({
+      where: { baseId: zaher.id, niveauId: niveauxParNom["Tle"].id, serieId: tleSerieD.id, label },
+    });
+    if (!existing) {
+      await prisma.sessionGroup.create({
+        data: { baseId: zaher.id, niveauId: niveauxParNom["Tle"].id, serieId: tleSerieD.id, label },
+      });
+    }
+  }
+
+  // ÉCOLES — reprend la liste figée dans Index.html (autocomplete du formulaire d'inscription).
+  const ecoles = [
+    "Collège Ange Dominique 1", "Collège Ange Dominique 2", "Collège Aries", "Collège Eden", "Collège Heleis",
+    "Collège K. L. Djédri", "Collège Konan 1", "Collège Konan 2", "Collège La Fontaine",
+    "Collège Moderne II de Yamoussoukro", "Collège Municipal de Yamoussoukro", "Collège Notre Dame de la Visitation",
+    "Collège Notre Dame de Lourdes", "Collège Notre Dame des Lacs 1", "Collège Privé Agbéhy des Jeunes Élites",
+    "Collège Privé Amorovi", "Collège Privé Avogadro", "Collège Privé BAKOU", "Collège Privé CALE",
+    "Collège Privé Catholique Saint Louis", "Collège Privé Dieudonné", "Collège Privé Gnonhonda",
+    "Collège Privé Grâce Trésor", "Collège Privé ISCAE", "Collège Privé Jeunes Filles Athéna", "Collège Privé Kiwi",
+    "Collège Privé Mariam Fofana Al Ma-Arifa", "Collège Privé Mocinla", "Collège Privé Notre Dame des Lacs 2",
+    "Collège Privé Pédagogue", "Collège Privé Sainte Catherine", "Cours Secondaire Protestant CMA",
+    "Lycée Mamie Adjoua", "Lycée Mixte 1", "Lycée Mixte 2", "Lycée Moderne 1", "Lycée Moderne BAD",
+    "Lycée Scientifique de Yamoussoukro",
+  ];
+  for (const nom of ecoles) {
+    await prisma.school.upsert({ where: { name: nom }, update: {}, create: { name: nom } });
   }
 
   // Compte admin de test — change le mot de passe immédiatement après la première connexion.
