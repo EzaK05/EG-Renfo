@@ -3,13 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Production: avoid loading Tailwind from the CDN. Use a locally built stylesheet instead. -->
+  <link rel="stylesheet" href="tailwind-fallback.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: { extend: { colors: { rouge: '#C8161B', jaune: '#F5C518' }, fontFamily: { sans: ['Inter', 'sans-serif'] } } }
-    }
-  </script>
   <style>
     body { background-color: #f3f4f6; padding-bottom: 90px; font-family: 'Inter', sans-serif; }
     input, select, textarea, button { font-family: inherit; }
@@ -533,6 +529,31 @@
   </div>
 
   <script>
+    // Apps Script runtime shim for local preview
+    function createGoogleScriptRunShim() {
+      const handler = { _success: null, _failure: null };
+      const api = {
+        withSuccessHandler(fn) { handler._success = fn; return api; },
+        withFailureHandler(fn) { handler._failure = fn; return api; }
+      };
+      return new Proxy(api, {
+        get(target, prop) {
+          if (prop in target) return target[prop];
+          // Any method called (e.g. .verifierLogin(...)) will trigger failure handler
+          return function(...args) {
+            const err = new Error('google.script.run not available in this environment.');
+            if (handler._failure) handler._failure(err);
+            else console.warn(err.message, prop, args);
+          };
+        }
+      });
+    }
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      window.google = window.google || {};
+      google.script = google.script || {};
+      google.script.run = createGoogleScriptRunShim();
+      console.warn('google.script.run shim active: page not served from Apps Script. Server calls will invoke failure handlers.');
+    }
     let sessionToken = "";
     let currentEncaisseur = "";
     let userBase = null;

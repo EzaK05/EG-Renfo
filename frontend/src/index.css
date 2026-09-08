@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+/* Reprend l'identité visuelle de l'app GAS actuelle (rouge/jaune Excellence Group) */
+@theme {
+  --color-rouge: #c8161b;
+  --color-jaune: #f5c518;
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+body {
+  @apply bg-gray-100 text-gray-900;
+}
